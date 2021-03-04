@@ -86,11 +86,12 @@ class FormMapper implements FieldDefinitionFormMapperInterface, FieldValueFormMa
 
         $metasConfig = $this->configResolver->getParameter('fieldtype_metas', 'nova_ezseo');
 
-        if (empty($data->value->metas)) {
-            foreach (array_keys($metasConfig) as $key) {
+        foreach (array_keys($metasConfig) as $key) {
+            if (empty($data->value->metas[$key])) {
                 $data->value->metas[$key] = new Meta($key, '');
             }
         }
+
 
         $fieldForm
             ->add(
