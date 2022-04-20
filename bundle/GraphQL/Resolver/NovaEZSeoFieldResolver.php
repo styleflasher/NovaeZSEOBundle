@@ -40,7 +40,7 @@ class NovaEZSeoFieldResolver implements ResolverInterface, AliasedInterface
         return $output;
     }
 
-    public static function getAliases()
+    public static function getAliases(): array
     {
         return [
             'resolveMetasFieldValue' => 'NovaSeoMetasFieldValue'
