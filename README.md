@@ -1,5 +1,7 @@
 # Novactive eZ SEO Bundle
 
+> **NOTE**
+> This branch is maintained by styleflasher with the purpose to support php 8.
 ----
 
 This repository is what we call a "subtree split": a read-only copy of one directory of the main repository. 
