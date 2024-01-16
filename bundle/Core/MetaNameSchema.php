@@ -39,45 +39,21 @@ use Ibexa\FieldTypeRichText\FieldType\RichText as RichTextValue;
 
 class MetaNameSchema extends NameSchemaService
 {
-    /**
-     * @var RichTextConverterInterface
-     */
-    protected $richTextConverter;
+    protected Converter $richTextConverter;
 
-    /**
-     * @var VariationHandler
-     */
-    protected $imageVariationService;
+    protected VariationHandler $imageVariationService;
 
-    /**
-     * @var RepositoryInterface
-     */
-    protected $repository;
+    protected RepositoryInterface $repository;
 
-    /**
-     * @var TranslationHelper
-     */
-    protected $translationHelper;
+    protected TranslationHelper $translationHelper;
 
-    /**
-     * @var int
-     */
-    protected $fieldContentMaxLength = 255;
+    protected int $fieldContentMaxLength = 255;
 
-    /**
-     * @var FieldTypeRegistry
-     */
-    protected $fieldTypeRegistry;
+    protected FieldTypeRegistry $fieldTypeRegistry;
 
-    /**
-     * @var RelationListType
-     */
-    private $relationListField;
+    private RelationListType $relationListField;
 
-    /**
-     * @var ConfigResolverInterface
-     */
-    private $configurationResolver;
+    private ConfigResolverInterface $configurationResolver;
 
     public function __construct(
         ContentTypeHandler $contentTypeHandler,
