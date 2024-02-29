@@ -12,18 +12,11 @@
 
 namespace Novactive\Bundle\eZSEOBundle\Core;
 
-use Ibexa\Contracts\Core\Persistence\Content\Language\Handler as ContentLanguageHandler;
-use Ibexa\Contracts\Core\Persistence\Content\Type as SPIContentType;
-use Ibexa\Contracts\Core\Persistence\Content\Type\Handler as ContentTypeHandler;
 use Ibexa\Contracts\Core\Repository\Repository as RepositoryInterface;
 use Ibexa\Contracts\Core\Repository\Values\Content\Content;
 use Ibexa\Contracts\Core\Repository\Values\Content\Field;
 use Ibexa\Contracts\Core\Repository\Values\ContentType\ContentType;
-use Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface;
-use Ibexa\Contracts\Core\Variation\VariationHandler;
-use Ibexa\Contracts\FieldTypeRichText\RichText\Converter as RichTextConverterInterface;
 use Ibexa\Core\Base\Exceptions\InvalidArgumentType;
-use Ibexa\Core\Base\Exceptions\NotFoundException;
 use Ibexa\Core\FieldType\FieldTypeRegistry;
 use Ibexa\Core\FieldType\Image\Value as ImageValue;
 use Ibexa\Core\FieldType\ImageAsset\Value as ImageAssetValue;
@@ -31,40 +24,49 @@ use Ibexa\Core\FieldType\Relation\Value as RelationValue;
 use Ibexa\Core\FieldType\RelationList\Type as RelationListType;
 use Ibexa\Core\FieldType\RelationList\Value as RelationListValue;
 use Ibexa\Core\Helper\TranslationHelper;
-use Ibexa\Core\MVC\Exception\SourceImageNotFoundException;
+use Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface;
 use Ibexa\Core\Repository\Helper\NameSchemaService;
 use Ibexa\Core\Repository\Mapper\ContentTypeDomainMapper;
 use Ibexa\Core\Repository\Values\Content\VersionInfo;
+use Ibexa\Contracts\Core\Persistence\Content\Language\Handler as ContentLanguageHandler;
+use Ibexa\Contracts\Core\Persistence\Content\Type as SPIContentType;
+use Ibexa\Contracts\Core\Persistence\Content\Type\Handler as ContentTypeHandler;
+use Ibexa\Contracts\Core\Variation\VariationHandler;
 use Ibexa\FieldTypeRichText\FieldType\RichText as RichTextValue;
+use Ibexa\Contracts\FieldTypeRichText\RichText\Converter as RichTextConverterInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class MetaNameSchema extends NameSchemaService
 {
-    protected Converter $richTextConverter;
+    /**
+     * @var RichTextConverterInterface
+     */
+    protected $richTextConverter;
 
-    protected VariationHandler $imageVariationService;
+    /**
+     * @var VariationHandler
+     */
+    protected $imageVariationService;
 
-    protected RepositoryInterface $repository;
+    /**
+     * @var int
+     */
+    protected $fieldContentMaxLength = 255;
 
-    protected TranslationHelper $translationHelper;
-
-    protected int $fieldContentMaxLength = 255;
-
-    protected FieldTypeRegistry $fieldTypeRegistry;
 
     private RelationListType $relationListField;
 
-    private ConfigResolverInterface $configurationResolver;
 
     public function __construct(
-        ContentTypeHandler $contentTypeHandler,
-        FieldTypeRegistry $fieldTypeRegistry,
-        ContentLanguageHandler $languageHandler,
-        RepositoryInterface $repository,
-        TranslationHelper $translationHelper,
-        ConfigResolverInterface $configurationResolver,
+        protected ContentTypeHandler $contentTypeHandler,
+        protected FieldTypeRegistry $fieldTypeRegistry,
+        protected EventDispatcherInterface $eventDispatcher,
+        protected ContentLanguageHandler $languageHandler,
+        protected RepositoryInterface $repository,
+        protected TranslationHelper $translationHelper,
+        protected ConfigResolverInterface $configurationResolver,
         array $settings = []
     ) {
-        $this->fieldTypeRegistry = $fieldTypeRegistry;
         $settings['limit'] = $this->fieldContentMaxLength;
         $handler = new ContentTypeDomainMapper(
             $contentTypeHandler,
@@ -72,12 +74,9 @@ class MetaNameSchema extends NameSchemaService
             $this->fieldTypeRegistry
         );
 
-        parent::__construct($contentTypeHandler, $handler, $fieldTypeRegistry, $settings);
+        parent::__construct($contentTypeHandler, $handler, $fieldTypeRegistry, $eventDispatcher, $settings);
 
-        $this->repository = $repository;
-        $this->translationHelper = $translationHelper;
         $this->relationListField = $this->fieldTypeRegistry->getFieldType('ezobjectrelationlist');
-        $this->configurationResolver = $configurationResolver;
     }
 
     public function setRichTextConverter(RichTextConverterInterface $richTextConverter): void
@@ -95,7 +94,7 @@ class MetaNameSchema extends NameSchemaService
     {
         $languages = $this->configurationResolver->getParameter('languages');
 
-        $resolveMultilingue = $this->resolve(
+        $resolveMultilingue = $this->resolveNameSchema(
             $meta->getContent(),
             $content->getContentType(),
             $content->fields,
@@ -150,7 +149,7 @@ class MetaNameSchema extends NameSchemaService
                     throw new InvalidArgumentType('$contentType', 'API or SPI variant of ContentType');
                 }
 
-                // eZ XML Text
+                //eZ XML Text
                 if ($fieldMap[$fieldDefinitionIdentifier][$languageCode] instanceof RichTextValue) {
                     $fieldTitles[$fieldDefinitionIdentifier] = $this->handleRichTextValue(
                         $fieldMap[$fieldDefinitionIdentifier][$languageCode]
@@ -158,7 +157,7 @@ class MetaNameSchema extends NameSchemaService
                     continue;
                 }
 
-                // eZ Object Relation
+                //eZ Object Relation
                 if ($fieldMap[$fieldDefinitionIdentifier][$languageCode] instanceof RelationValue) {
                     $fieldTitles[$fieldDefinitionIdentifier] = $this->handleRelationValue(
                         $fieldMap[$fieldDefinitionIdentifier][$languageCode],
@@ -167,7 +166,7 @@ class MetaNameSchema extends NameSchemaService
                     continue;
                 }
 
-                // eZ Object Relation List
+                //eZ Object Relation List
                 if ($fieldMap[$fieldDefinitionIdentifier][$languageCode] instanceof RelationListValue) {
                     $fieldTitles[$fieldDefinitionIdentifier] = $this->handleRelationListValue(
                         $fieldMap[$fieldDefinitionIdentifier][$languageCode],
@@ -276,16 +275,12 @@ class MetaNameSchema extends NameSchemaService
             return '';
         }
 
-        try {
-            return $this->getVariation(
-                $value,
-                $fieldDefinitionIdentifier,
-                $languageCode,
-                'social_network_image'
-            );
-        } catch (SourceImageNotFoundException $e) {
-            return '';
-        }
+        return $this->getVariation(
+            $value,
+            $fieldDefinitionIdentifier,
+            $languageCode,
+            'social_network_image'
+        );
     }
 
     /**
@@ -297,11 +292,7 @@ class MetaNameSchema extends NameSchemaService
             return '';
         }
 
-        try {
-            $content = $this->repository->getContentService()->loadContent($value->destinationContentId);
-        } catch (NotFoundException $e) {
-            return '';
-        }
+        $content = $this->repository->getContentService()->loadContent($value->destinationContentId);
 
         foreach ($content->getFields() as $field) {
             if ($field->value instanceof ImageValue) {
