@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Novactive\Bundle\eZSEOBundle\Core\FieldType\Metas\MetasStorage\Gateway;
 
 use Doctrine\DBAL\Connection;
@@ -13,14 +15,8 @@ class DoctrineStorage extends Gateway
 {
     public const TABLE = 'novaseo_meta';
 
-    /**
-     * @var Connection
-     */
-    private $connection;
-
-    public function __construct(Connection $connection)
+    public function __construct(private readonly Connection $connection)
     {
-        $this->connection = $connection;
     }
 
     public function storeFieldData(VersionInfo $versionInfo, Field $field): void
@@ -37,10 +33,10 @@ class DoctrineStorage extends Gateway
                         $this->connection->quoteIdentifier('objectattribute_version') => ':objectattribute_version',
                     ]
                 )
-                ->setParameter(':meta_name', $meta['meta_name'], ParameterType::STRING)
-                ->setParameter(':meta_content', $meta['meta_content'], ParameterType::STRING)
-                ->setParameter(':objectattribute_id', $field->id, ParameterType::INTEGER)
-                ->setParameter(':objectattribute_version', $versionInfo->versionNo, ParameterType::INTEGER);
+                ->setParameter('meta_name', $meta['meta_name'], ParameterType::STRING)
+                ->setParameter('meta_content', $meta['meta_content'], ParameterType::STRING)
+                ->setParameter('objectattribute_id', $field->id, ParameterType::INTEGER)
+                ->setParameter('objectattribute_version', $versionInfo->versionNo, ParameterType::INTEGER);
 
             $insertQuery->execute();
         }
@@ -53,49 +49,49 @@ class DoctrineStorage extends Gateway
 
     public function deleteFieldData(VersionInfo $versionInfo, array $fieldIds): void
     {
-        $deleteQuery = $this->connection->createQueryBuilder();
-        $deleteQuery
+        $queryBuilder = $this->connection->createQueryBuilder();
+        $queryBuilder
             ->delete($this->connection->quoteIdentifier(self::TABLE))
             ->where(
-                $deleteQuery->expr()->andX(
-                    $deleteQuery->expr()->in(
+                $queryBuilder->expr()->andX(
+                    $queryBuilder->expr()->in(
                         $this->connection->quoteIdentifier('objectattribute_id'),
                         $fieldIds
                     ),
-                    $deleteQuery->expr()->eq(
+                    $queryBuilder->expr()->eq(
                         $this->connection->quoteIdentifier('objectattribute_version'),
                         ':version'
                     )
                 )
             )
-            ->setParameter(':version', $versionInfo->versionNo, ParameterType::INTEGER);
+            ->setParameter('version', $versionInfo->versionNo, ParameterType::INTEGER);
 
-        $deleteQuery->execute();
+        $queryBuilder->execute();
     }
 
     public function loadFieldData(VersionInfo $versionInfo, Field $field): array
     {
-        $selectQuery = $this->connection->createQueryBuilder();
-        $selectQuery
+        $queryBuilder = $this->connection->createQueryBuilder();
+        $queryBuilder
             ->select('*')
             ->distinct()
             ->from($this->connection->quoteIdentifier(self::TABLE))
             ->where(
-                $selectQuery->expr()->andX(
-                    $selectQuery->expr()->eq(
+                $queryBuilder->expr()->andX(
+                    $queryBuilder->expr()->eq(
                         $this->connection->quoteIdentifier('objectattribute_id'),
                         ':objectattribute_id'
                     ),
-                    $selectQuery->expr()->eq(
+                    $queryBuilder->expr()->eq(
                         $this->connection->quoteIdentifier('objectattribute_version'),
                         ':objectattribute_version'
                     )
                 )
             )
-            ->setParameter(':objectattribute_id', $field->id, ParameterType::INTEGER)
-            ->setParameter(':objectattribute_version', $versionInfo->versionNo, ParameterType::INTEGER);
+            ->setParameter('objectattribute_id', $field->id, ParameterType::INTEGER)
+            ->setParameter('objectattribute_version', $versionInfo->versionNo, ParameterType::INTEGER);
 
-        $statement = $selectQuery->execute();
+        $statement = $queryBuilder->execute();
 
         return $statement->fetchAll(FetchMode::ASSOCIATIVE);
     }

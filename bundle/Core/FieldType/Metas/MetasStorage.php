@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle MetasStorage.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Core\FieldType\Metas;
 
 use Ibexa\Contracts\Core\FieldType\GatewayBasedStorage;
@@ -24,7 +25,7 @@ class MetasStorage extends GatewayBasedStorage
     /**
      * Stores value for $field in an external data source.
      */
-    public function storeFieldData(VersionInfo $versionInfo, Field $field)
+    public function storeFieldData(VersionInfo $versionInfo, Field $field): void
     {
         if (empty($field->value->externalData)) {
             return;
@@ -41,7 +42,7 @@ class MetasStorage extends GatewayBasedStorage
     /**
      * Populates $field value property based on the external data.
      */
-    public function getFieldData(VersionInfo $versionInfo, Field $field)
+    public function getFieldData(VersionInfo $versionInfo, Field $field): void
     {
         $this->gateway->getFieldData($versionInfo, $field);
     }
@@ -50,7 +51,7 @@ class MetasStorage extends GatewayBasedStorage
      * Deletes field data for all $fieldIds in the version identified by
      * $versionInfo.
      */
-    public function deleteFieldData(VersionInfo $versionInfo, array $fieldIds)
+    public function deleteFieldData(VersionInfo $versionInfo, array $fieldIds): void
     {
         $this->gateway->deleteFieldData($versionInfo, $fieldIds);
     }

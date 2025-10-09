@@ -61,7 +61,7 @@ services:
             $languageHandler: '@Ibexa\Core\Persistence\Cache\ContentLanguageHandler'
             $repository: '@Ibexa\Contracts\Core\Repository\Repository'
             $translationHelper: '@Ibexa\Core\Helper\TranslationHelper'
-            $configurationResolver: '@Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface'
+            $configResolver: '@Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface'
         calls:
             - [setRichTextConverter, ["@Ibexa\\FieldTypeRichText\\RichText\\Converter\\Html5"]]
             # Note: injecting lower layer Variation Handler (AliasGenerator) as a workaround for missing Public API objects context
@@ -86,7 +86,7 @@ services:
     Novactive\Bundle\eZSEOBundle\Core\SiteAccessAwareEntityManagerFactory:
         arguments:
             $repositoryConfigurationProvider: "@Ibexa\\Bundle\\Core\\ApiLoader\\RepositoryConfigurationProvider"
-            $resolver: "@doctrine.orm.default_entity_listener_resolver"
+            $containerEntityListenerResolver: "@doctrine.orm.default_entity_listener_resolver"
             $settings: { debug: "%kernel.debug%", cache_dir: "%kernel.cache_dir%" }
 
     novaezeo.doctrine.entity_manager:

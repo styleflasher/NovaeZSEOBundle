@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle MetasCollectionType.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Form\Type;
 
 use Symfony\Component\Form\AbstractType;
@@ -26,6 +27,7 @@ class MetasCollectionType extends AbstractType
         return $this->getBlockPrefix();
     }
 
+    #[\Override]
     public function getBlockPrefix(): string
     {
         return 'novaseo_fieldtype_metas_metas';
@@ -46,6 +48,7 @@ class MetasCollectionType extends AbstractType
         );
     }
 
+    #[\Override]
     public function getParent(): string
     {
         return CollectionType::class;

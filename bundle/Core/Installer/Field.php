@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Novactive\Bundle\eZSEOBundle\Core\Installer;
 
 use DateTime;
@@ -10,36 +12,25 @@ use Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface;
 
 class Field
 {
-    private ContentTypeService $contentTypeService;
-
-    private ConfigResolverInterface $configResolver;
-
-    /**
-     * @var string
-     */
-    private $errorMessage;
+    private ?string $errorMessage = null;
 
     /**
      * Constructor.
      */
-    public function __construct(
-        ContentTypeService $contentTypeService,
-        ConfigResolverInterface $configResolver
-    ) {
-        $this->contentTypeService = $contentTypeService;
-        $this->configResolver = $configResolver;
+    public function __construct(private readonly ContentTypeService $contentTypeService, private readonly ConfigResolverInterface $configResolver)
+    {
     }
 
     public function addToContentType(string $fieldName, ContentType $contentType): bool
     {
         try {
             $contentTypeDraft = $this->contentTypeService->loadContentTypeDraft($contentType->id);
-        } catch (NotFoundException $e) {
+        } catch (NotFoundException) {
             $contentTypeDraft = $this->contentTypeService->createContentTypeDraft($contentType);
         }
 
-        $typeUpdate = $this->contentTypeService->newContentTypeUpdateStruct();
-        $typeUpdate->modificationDate = new DateTime();
+        $contentTypeUpdateStruct = $this->contentTypeService->newContentTypeUpdateStruct();
+        $contentTypeUpdateStruct->modificationDate = new DateTime();
 
         $knowLanguage = array_keys($contentType->getDescriptions());
 
@@ -47,41 +38,41 @@ class Field
             $knowLanguage[] = $contentType->mainLanguageCode;
         }
 
-        $fieldCreateStruct = $this->contentTypeService->newFieldDefinitionCreateStruct(
+        $fieldDefinitionCreateStruct = $this->contentTypeService->newFieldDefinitionCreateStruct(
             $fieldName,
             'novaseometas'
         );
 
-        $fieldCreateStruct->names =
+        $fieldDefinitionCreateStruct->names =
             array_fill_keys(
                 $knowLanguage,
                 $this->configResolver->getParameter('meta_field_name', 'novactive.novaseobundle')
             );
-        $fieldCreateStruct->descriptions =
+        $fieldDefinitionCreateStruct->descriptions =
             array_fill_keys(
                 $knowLanguage,
                 $this->configResolver->getParameter('meta_field_description', 'novactive.novaseobundle')
             );
-        $fieldCreateStruct->fieldGroup =
+        $fieldDefinitionCreateStruct->fieldGroup =
             $this->configResolver->getParameter('meta_field_group', 'novactive.novaseobundle');
-        $fieldCreateStruct->position = 100;
-        $fieldCreateStruct->isTranslatable = true;
-        $fieldCreateStruct->isRequired = false;
-        $fieldCreateStruct->isSearchable = false;
-        $fieldCreateStruct->isInfoCollector = false;
+        $fieldDefinitionCreateStruct->position = 100;
+        $fieldDefinitionCreateStruct->isTranslatable = true;
+        $fieldDefinitionCreateStruct->isRequired = false;
+        $fieldDefinitionCreateStruct->isSearchable = false;
+        $fieldDefinitionCreateStruct->isInfoCollector = false;
 
         try {
-            $this->contentTypeService->updateContentTypeDraft($contentTypeDraft, $typeUpdate);
+            $this->contentTypeService->updateContentTypeDraft($contentTypeDraft, $contentTypeUpdateStruct);
 
             if (null == $contentTypeDraft->getFieldDefinition($fieldName)) {
-                $this->contentTypeService->addFieldDefinition($contentTypeDraft, $fieldCreateStruct);
+                $this->contentTypeService->addFieldDefinition($contentTypeDraft, $fieldDefinitionCreateStruct);
             }
 
             $this->contentTypeService->publishContentTypeDraft($contentTypeDraft);
 
             return true;
-        } catch (\Exception $e) {
-            $this->errorMessage = $e->getMessage();
+        } catch (\Exception $exception) {
+            $this->errorMessage = $exception->getMessage();
 
             return false;
         }
@@ -91,7 +82,7 @@ class Field
     {
         $fieldDefinition = $contentType->getFieldDefinition($fieldName);
 
-        return null !== $fieldDefinition;
+        return $fieldDefinition instanceof \Ibexa\Contracts\Core\Repository\Values\ContentType\FieldDefinition;
     }
 
     public function getErrorMessage(): string

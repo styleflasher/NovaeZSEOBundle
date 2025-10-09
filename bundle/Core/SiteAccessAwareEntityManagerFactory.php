@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Core;
 
 use Doctrine\Bundle\DoctrineBundle\Mapping\ContainerEntityListenerResolver;
@@ -24,36 +25,8 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 class SiteAccessAwareEntityManagerFactory
 {
-    /**
-     * @var Registry
-     */
-    private $registry;
-
-    /**
-     * @var RepositoryConfigurationProvider
-     */
-    private $repositoryConfigurationProvider;
-
-    /**
-     * @var array
-     */
-    private $settings;
-
-    /**
-     * @var ContainerEntityListenerResolver
-     */
-    private $resolver;
-
-    public function __construct(
-        Registry $registry,
-        RepositoryConfigurationProvider $repositoryConfigurationProvider,
-        ContainerEntityListenerResolver $resolver,
-        array $settings
-    ) {
-        $this->registry = $registry;
-        $this->repositoryConfigurationProvider = $repositoryConfigurationProvider;
-        $this->settings = $settings;
-        $this->resolver = $resolver;
+    public function __construct(private readonly Registry $registry, private readonly \Ibexa\Contracts\Core\Container\ApiLoader\RepositoryConfigurationProviderInterface $repositoryConfigurationProvider, private readonly ContainerEntityListenerResolver $containerEntityListenerResolver, private array $settings)
+    {
     }
 
     private function getConnectionName(): string
@@ -74,18 +47,19 @@ class SiteAccessAwareEntityManagerFactory
         $connection = $this->registry->getConnection($connectionName);
 
         /** @var \Doctrine\DBAL\Connection $connection */
-        $cache = new ArrayAdapter();
-        $config = new Configuration();
-        $config->setMetadataCacheImpl(DoctrineProvider::wrap($cache));
-        $driverImpl = $config->newDefaultAnnotationDriver(__DIR__.'/../Entity', false);
-        $config->setMetadataDriverImpl($driverImpl);
-        $config->setQueryCacheImpl(DoctrineProvider::wrap($cache));
-        $config->setProxyDir($this->settings['cache_dir'].'/eZSEOBundle/');
-        $config->setProxyNamespace('eZSEOBundle\Proxies');
-        $config->setAutoGenerateProxyClasses($this->settings['debug']);
-        $config->setEntityListenerResolver($this->resolver);
-        $config->setNamingStrategy(new UnderscoreNamingStrategy());
+        $arrayAdapter = new ArrayAdapter();
+        $configuration = new Configuration();
+        $configuration->setMetadataCacheImpl(DoctrineProvider::wrap($arrayAdapter));
 
-        return EntityManager::create($connection, $config);
+        $annotationDriver = $configuration->newDefaultAnnotationDriver(__DIR__.'/../Entity', false);
+        $configuration->setMetadataDriverImpl($annotationDriver);
+        $configuration->setQueryCacheImpl(DoctrineProvider::wrap($arrayAdapter));
+        $configuration->setProxyDir($this->settings['cache_dir'].'/eZSEOBundle/');
+        $configuration->setProxyNamespace('eZSEOBundle\Proxies');
+        $configuration->setAutoGenerateProxyClasses($this->settings['debug']);
+        $configuration->setEntityListenerResolver($this->containerEntityListenerResolver);
+        $configuration->setNamingStrategy(new UnderscoreNamingStrategy());
+
+        return EntityManager::create($connection, $configuration);
     }
 }

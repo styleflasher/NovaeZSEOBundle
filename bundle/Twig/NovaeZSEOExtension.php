@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle NovaeZSEOExtension.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Twig;
 
 use Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException;
@@ -29,36 +30,8 @@ use Twig\Extension\AbstractExtension;
 use Twig\Extension\GlobalsInterface;
 use Twig\TwigFilter;
 
-class NovaeZSEOExtension extends AbstractExtension implements GlobalsInterface
+class NovaeZSEOExtension implements GlobalsInterface
 {
-    /**
-     * The Ibexa Platform object name pattern service (extended).
-     *
-     * @var MetaNameSchema
-     */
-    protected $metaNameSchema;
-
-    /**
-     * ConfigResolver useful to get the config aware of siteaccess.
-     *
-     * @var ConfigResolverInterface
-     */
-    protected $configResolver;
-
-    /**
-     * The Ibexa Platform API.
-     *
-     * @var Repository
-     */
-    protected $ibexaRepository;
-
-    /**
-     * Locale Converter.
-     *
-     * @var LocaleConverter
-     */
-    protected $localeConverter;
-
     /**
      * CustomFallBack Service.
      *
@@ -67,36 +40,38 @@ class NovaeZSEOExtension extends AbstractExtension implements GlobalsInterface
     protected $customFallBackService;
 
     public function __construct(
-        Repository $repository,
-        MetaNameSchema $nameSchema,
-        ConfigResolverInterface $configResolver,
-        LocaleConverter $localeConverter
-    ) {
-        $this->metaNameSchema = $nameSchema;
-        $this->ibexaRepository = $repository;
-        $this->configResolver = $configResolver;
-        $this->localeConverter = $localeConverter;
-    }
-
-    public function setCustomFallbackService(CustomFallbackInterface $service)
+        /**
+         * The Ibexa Platform API.
+         */
+        protected \Ibexa\Contracts\Core\Repository\Repository $ibexaRepository,
+        /**
+         * The Ibexa Platform object name pattern service (extended).
+         */
+        protected \Novactive\Bundle\eZSEOBundle\Core\MetaNameSchema $metaNameSchema,
+        /**
+         * ConfigResolver useful to get the config aware of siteaccess.
+         */
+        protected \Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface $configResolver,
+        /**
+         * Locale Converter.
+         */
+        protected \Ibexa\Core\MVC\Symfony\Locale\LocaleConverterInterface $localeConverter
+    )
     {
-        $this->customFallBackService = $service;
     }
 
-    public function getFilters()
+    public function setCustomFallbackService(CustomFallbackInterface $customFallback): void
     {
-        return [
-            new TwigFilter('compute_novaseometas', [$this, 'computeMetas']),
-            new TwigFilter('getposixlocale_novaseometas', [$this, 'getPosixLocale']),
-            new TwigFilter('fallback_novaseometas', [$this, 'getFallbackedMetaContent']),
-        ];
+        $this->customFallBackService = $customFallback;
     }
 
+    #[\Twig\Attribute\AsTwigFilter('getposixlocale_novaseometas')]
     public function getPosixLocale(string $ibexaLocale): ?string
     {
         return $this->localeConverter->convertToPOSIX($ibexaLocale);
     }
 
+    #[\Twig\Attribute\AsTwigFilter('fallback_novaseometas')]
     public function getFallbackedMetaContent(ContentInfo $contentInfo, string $metaName): string
     {
         if ($this->customFallBackService instanceof CustomFallbackInterface) {
@@ -110,6 +85,7 @@ class NovaeZSEOExtension extends AbstractExtension implements GlobalsInterface
      * Compute Metas of the Field thanks to its Content and the Fallback.
      */
     // @param $content: use type Content rather than ContentInfo, the last one is @deprecated
+    #[\Twig\Attribute\AsTwigFilter('compute_novaseometas')]
     public function computeMetas(Field $field, $content): string
     {
         $fallback = false;
@@ -118,7 +94,7 @@ class NovaeZSEOExtension extends AbstractExtension implements GlobalsInterface
         if ($content instanceof ContentInfo) {
             try {
                 $content = $this->ibexaRepository->getContentService()->loadContentByContentInfo($content, $languages);
-            } catch (NotFoundException|UnauthorizedException $e) {
+            } catch (NotFoundException|UnauthorizedException) {
                 return '';
             }
         } elseif (!($content instanceof Content)) {
@@ -185,6 +161,7 @@ class NovaeZSEOExtension extends AbstractExtension implements GlobalsInterface
                         $meta->setContent($configuration[$meta->getName()]);
                     }
                 }
+
                 if (!$this->metaNameSchema->resolveMeta($meta, $content)) {
                     $needFallback = true;
                 }
@@ -196,7 +173,7 @@ class NovaeZSEOExtension extends AbstractExtension implements GlobalsInterface
         return [];
     }
 
-    public function getName()
+    public function getName(): string
     {
         return 'novaezseo_extension';
     }

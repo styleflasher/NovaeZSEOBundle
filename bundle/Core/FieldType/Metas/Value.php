@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle MetasValue.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Core\FieldType\Metas;
 
 use Ibexa\Core\FieldType\Value as BaseValue;
@@ -47,10 +48,10 @@ class Value extends BaseValue
     public function __toString(): string
     {
         $str = '';
-        if (count($this->metas)) {
+        if (count($this->metas) !== 0) {
             foreach ($this->metas as $meta) {
                 /* @var Meta $meta */
-                $str .= "{$meta->getName()} = {$meta->getContent()}\n";
+                $str .= sprintf('%s = %s%s', $meta->getName(), $meta->getContent(), PHP_EOL);
             }
         }
 

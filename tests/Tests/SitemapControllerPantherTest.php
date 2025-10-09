@@ -21,15 +21,15 @@ class SitemapControllerPantherTest extends PantherTestCase
 {
     public function testSitemapIsXML(): void
     {
-        $helper = new BrowserHelper($this->getPantherClient());
-        $crawler = $helper->get('/sitemap.xml');
+        $browserHelper = new BrowserHelper($this->getPantherClient());
+        $crawler = $browserHelper->get('/sitemap.xml');
         $this->assertEquals(1, $crawler->filter('urlset')->count());
     }
 
     public function testSitemapPageIsXML(): void
     {
-        $helper = new BrowserHelper($this->getPantherClient());
-        $crawler = $helper->get('/sitemap-1.xml');
+        $browserHelper = new BrowserHelper($this->getPantherClient());
+        $crawler = $browserHelper->get('/sitemap-1.xml');
         $this->assertEquals(1, $crawler->filter('urlset')->count());
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle MetasType.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Core\FieldType\Metas;
 
 use Ibexa\Contracts\Core\FieldType\Value as SPIValue;
@@ -36,17 +37,14 @@ class Type extends FieldType
         ],
     ];
 
-    protected SeoMetadataFieldTypeRegistry $metadataFieldTypeRegistry;
-
-    public function __construct(
-        SeoMetadataFieldTypeRegistry $metadataFieldTypeRegistry
-    ) {
-        $this->metadataFieldTypeRegistry = $metadataFieldTypeRegistry;
+    public function __construct(protected SeoMetadataFieldTypeRegistry $metadataFieldTypeRegistry)
+    {
     }
 
     /**
      * Validates the fieldSettings of a FieldDefinitionCreateStruct or FieldDefinitionUpdateStruct.
      */
+    #[\Override]
     public function validateFieldSettings($fieldSettings): array
     {
         $validationErrors = [];
@@ -63,9 +61,10 @@ class Type extends FieldType
                                 '%setting%' => $settingKey,
                                 '%type%' => 'hash',
                             ],
-                            "[$settingKey]"
+                            sprintf('[%s]', $settingKey)
                         );
                     }
+
                     break;
                 default:
                     $validationErrors[] = new ValidationError(
@@ -74,7 +73,7 @@ class Type extends FieldType
                         [
                             '%setting%' => $settingKey,
                         ],
-                        "[$settingKey]"
+                        sprintf('[%s]', $settingKey)
                     );
             }
         }
@@ -101,6 +100,7 @@ class Type extends FieldType
                     throw new InvalidArgumentType('$inputValue['.$index.']', Meta::class, $inputValueItem);
                 }
             }
+
             $inputValue = new Value($inputValue);
         }
 
@@ -182,6 +182,7 @@ class Type extends FieldType
     /**
      * Converts a $value to a persistence value.
      */
+    #[\Override]
     public function toPersistenceValue(SPIValue $value): FieldValue
     {
         return new FieldValue(
@@ -196,6 +197,7 @@ class Type extends FieldType
     /**
      * Converts a persistence $fieldValue to a Value.
      */
+    #[\Override]
     public function fromPersistenceValue(FieldValue $fieldValue): Value
     {
         return $this->fromHash($fieldValue->externalData);
@@ -204,8 +206,9 @@ class Type extends FieldType
     /**
      * Returns if the given $value is considered empty by the field type.
      */
+    #[\Override]
     public function isEmptyValue(SPIValue $value): bool
     {
-        return null === $value || $value->metas == $this->getEmptyValue()->metas;
+        return !$value instanceof \Ibexa\Contracts\Core\FieldType\Value || $value->metas == $this->getEmptyValue()->metas;
     }
 }

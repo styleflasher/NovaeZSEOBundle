@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle MetaNameSchema.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Core;
 
 use Ibexa\Contracts\Core\Persistence\Content\Language\Handler as ContentLanguageHandler;
@@ -42,6 +43,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 class MetaNameSchema extends NameSchemaService
 {
     protected ContentTypeDomainMapper $contentTypeDomainMapper;
+
     /**
      * @var RichTextConverterInterface
      */
@@ -53,16 +55,6 @@ class MetaNameSchema extends NameSchemaService
     protected $imageVariationService;
 
     /**
-     * @var RepositoryInterface
-     */
-    protected $repository;
-
-    /**
-     * @var TranslationHelper
-     */
-    protected $translationHelper;
-
-    /**
      * @var int
      */
     protected $fieldContentMaxLength = 255;
@@ -70,12 +62,7 @@ class MetaNameSchema extends NameSchemaService
     /**
      * @var RelationListType
      */
-    private $relationListField;
-
-    /**
-     * @var ConfigResolverInterface
-     */
-    private $configurationResolver;
+    private readonly \Ibexa\Contracts\Core\FieldType\FieldType $fieldType;
 
     public function __construct(
         FieldTypeRegistry $fieldTypeRegistry,
@@ -83,9 +70,9 @@ class MetaNameSchema extends NameSchemaService
         EventDispatcherInterface $eventDispatcher,
         ContentTypeHandler $contentTypeHandler,
         ContentLanguageHandler $languageHandler,
-        RepositoryInterface $repository,
-        TranslationHelper $translationHelper,
-        ConfigResolverInterface $configurationResolver,
+        protected \Ibexa\Contracts\Core\Repository\Repository $repository,
+        protected \Ibexa\Core\Helper\TranslationHelper $translationHelper,
+        private readonly ConfigResolverInterface $configResolver,
         array $settings = []
     ) {
         $settings['limit'] = $this->fieldContentMaxLength;
@@ -96,11 +83,7 @@ class MetaNameSchema extends NameSchemaService
         );
 
         parent::__construct($fieldTypeRegistry, $schemaIdentifierExtractor, $eventDispatcher, $settings);
-
-        $this->repository = $repository;
-        $this->translationHelper = $translationHelper;
-        $this->relationListField = $this->fieldTypeRegistry->getFieldType('ezobjectrelationlist');
-        $this->configurationResolver = $configurationResolver;
+        $this->fieldType = $this->fieldTypeRegistry->getFieldType('ezobjectrelationlist');
     }
 
     public function setRichTextConverter(RichTextConverterInterface $richTextConverter): void
@@ -108,15 +91,15 @@ class MetaNameSchema extends NameSchemaService
         $this->richTextConverter = $richTextConverter;
     }
 
-    public function setImageVariationService(VariationHandler $handler): void
+    public function setImageVariationService(VariationHandler $variationHandler): void
     {
-        $this->imageVariationService = $handler;
+        $this->imageVariationService = $variationHandler;
     }
 
     // @param ContentType|null $contentType: @deprecated argument.
     public function resolveMeta(Meta $meta, Content $content, ?ContentType $contentType = null): bool
     {
-        $languages = $this->configurationResolver->getParameter('languages');
+        $languages = $this->configResolver->getParameter('languages');
 
         $resolveMultilingue = $this->resolveNameSchema(
             $meta->getContent(),
@@ -133,6 +116,7 @@ class MetaNameSchema extends NameSchemaService
 
             return true;
         }
+
         $meta->setContent('');
 
         return false;
@@ -149,12 +133,12 @@ class MetaNameSchema extends NameSchemaService
     ): array {
         $fieldTitles = [];
 
-        foreach ($schemaIdentifiers as $fieldDefinitionIdentifier) {
-            if (isset($fieldMap[$fieldDefinitionIdentifier][$languageCode])) {
+        foreach ($schemaIdentifiers as $schemaIdentifier) {
+            if (isset($fieldMap[$schemaIdentifier][$languageCode])) {
                 if ($contentType instanceof SPIContentType) {
                     $fieldDefinition = null;
                     foreach ($contentType->fieldDefinitions as $spiFieldDefinition) {
-                        if ($spiFieldDefinition->identifier === $fieldDefinitionIdentifier) {
+                        if ($spiFieldDefinition->identifier === $schemaIdentifier) {
                             $fieldDefinition = $this->contentTypeDomainMapper->buildFieldDefinitionDomainObject(
                                 $spiFieldDefinition,
                                 $languageCode
@@ -164,36 +148,36 @@ class MetaNameSchema extends NameSchemaService
                     }
 
                     if (null === $fieldDefinition) {
-                        $fieldTitles[$fieldDefinitionIdentifier] = '';
+                        $fieldTitles[$schemaIdentifier] = '';
                         continue;
                     }
                 } elseif ($contentType instanceof ContentType) {
-                    $fieldDefinition = $contentType->getFieldDefinition($fieldDefinitionIdentifier);
+                    $fieldDefinition = $contentType->getFieldDefinition($schemaIdentifier);
                 } else {
                     throw new InvalidArgumentType('$contentType', 'API or SPI variant of ContentType');
                 }
 
                 // eZ XML Text
-                if ($fieldMap[$fieldDefinitionIdentifier][$languageCode] instanceof RichTextValue) {
-                    $fieldTitles[$fieldDefinitionIdentifier] = $this->handleRichTextValue(
-                        $fieldMap[$fieldDefinitionIdentifier][$languageCode]
+                if ($fieldMap[$schemaIdentifier][$languageCode] instanceof RichTextValue) {
+                    $fieldTitles[$schemaIdentifier] = $this->handleRichTextValue(
+                        $fieldMap[$schemaIdentifier][$languageCode]
                     );
                     continue;
                 }
 
                 // eZ Object Relation
-                if ($fieldMap[$fieldDefinitionIdentifier][$languageCode] instanceof RelationValue) {
-                    $fieldTitles[$fieldDefinitionIdentifier] = $this->handleRelationValue(
-                        $fieldMap[$fieldDefinitionIdentifier][$languageCode],
+                if ($fieldMap[$schemaIdentifier][$languageCode] instanceof RelationValue) {
+                    $fieldTitles[$schemaIdentifier] = $this->handleRelationValue(
+                        $fieldMap[$schemaIdentifier][$languageCode],
                         $languageCode
                     );
                     continue;
                 }
 
                 // eZ Object Relation List
-                if ($fieldMap[$fieldDefinitionIdentifier][$languageCode] instanceof RelationListValue) {
-                    $fieldTitles[$fieldDefinitionIdentifier] = $this->handleRelationListValue(
-                        $fieldMap[$fieldDefinitionIdentifier][$languageCode],
+                if ($fieldMap[$schemaIdentifier][$languageCode] instanceof RelationListValue) {
+                    $fieldTitles[$schemaIdentifier] = $this->handleRelationListValue(
+                        $fieldMap[$schemaIdentifier][$languageCode],
                         $fieldDefinition,
                         $languageCode
                     );
@@ -201,20 +185,20 @@ class MetaNameSchema extends NameSchemaService
                 }
 
                 // eZ Image
-                if ($fieldMap[$fieldDefinitionIdentifier][$languageCode] instanceof ImageValue) {
-                    $fieldTitles[$fieldDefinitionIdentifier] = $this->handleImageValue(
-                        $fieldMap[$fieldDefinitionIdentifier][$languageCode],
-                        $fieldDefinitionIdentifier,
+                if ($fieldMap[$schemaIdentifier][$languageCode] instanceof ImageValue) {
+                    $fieldTitles[$schemaIdentifier] = $this->handleImageValue(
+                        $fieldMap[$schemaIdentifier][$languageCode],
+                        $schemaIdentifier,
                         $languageCode
                     );
                     continue;
                 }
 
                 // eZ Image asset
-                if ($fieldMap[$fieldDefinitionIdentifier][$languageCode] instanceof ImageAssetValue) {
-                    $fieldTitles[$fieldDefinitionIdentifier] = $this->handleImageAssetValue(
-                        $fieldMap[$fieldDefinitionIdentifier][$languageCode],
-                        $fieldDefinitionIdentifier,
+                if ($fieldMap[$schemaIdentifier][$languageCode] instanceof ImageAssetValue) {
+                    $fieldTitles[$schemaIdentifier] = $this->handleImageAssetValue(
+                        $fieldMap[$schemaIdentifier][$languageCode],
+                        $schemaIdentifier,
                         $languageCode
                     );
                     continue;
@@ -222,8 +206,8 @@ class MetaNameSchema extends NameSchemaService
 
                 $fieldType = $this->fieldTypeRegistry->getFieldType($fieldDefinition->fieldTypeIdentifier);
 
-                $fieldTitles[$fieldDefinitionIdentifier] = $fieldType->getName(
-                    $fieldMap[$fieldDefinitionIdentifier][$languageCode],
+                $fieldTitles[$schemaIdentifier] = $fieldType->getName(
+                    $fieldMap[$schemaIdentifier][$languageCode],
                     $fieldDefinition,
                     $languageCode
                 );
@@ -234,14 +218,14 @@ class MetaNameSchema extends NameSchemaService
     }
 
     protected function getVariation(
-        ImageValue $value,
+        ImageValue $imageValue,
         string $identifier,
         string $languageCode,
         string $variationName
     ): string {
         $field = new Field(
             [
-                'value' => $value,
+                'value' => $imageValue,
                 'fieldDefIdentifier' => $identifier,
                 'languageCode' => $languageCode,
             ]
@@ -255,58 +239,57 @@ class MetaNameSchema extends NameSchemaService
     /**
      * Get a Text from a Rich text field type.
      */
-    protected function handleRichTextValue(RichTextValue $value): string
+    protected function handleRichTextValue(RichTextValue $richTextValue): string
     {
-        return trim(strip_tags($this->richTextConverter->convert($value->xml)->saveHTML()));
+        return trim(strip_tags($this->richTextConverter->convert($richTextValue->xml)->saveHTML()));
     }
 
     /**
      * Get the Relation in text or URL.
      */
-    protected function handleRelationValue(RelationValue $value, string $languageCode): string
+    protected function handleRelationValue(RelationValue $relationValue, string $languageCode): string
     {
-        if (!$value->destinationContentId) {
+        if (!$relationValue->destinationContentId) {
             return '';
         }
-        $relatedContent = $this->repository->getContentService()->loadContent($value->destinationContentId);
+
+        $relatedContent = $this->repository->getContentService()->loadContent($relationValue->destinationContentId);
         // @todo: we can probably be better here and handle more than just "image"
         $fieldImageValue = $relatedContent->getFieldValue('image');
-        if ($fieldImageValue) {
-            if ($fieldImageValue->uri) {
-                return $this->getVariation(
-                    $fieldImageValue,
-                    'image',
-                    $languageCode,
-                    'social_network_image'
-                );
-            }
+        if ($fieldImageValue instanceof \Ibexa\Contracts\Core\FieldType\Value && $fieldImageValue->uri) {
+            return $this->getVariation(
+                $fieldImageValue,
+                'image',
+                $languageCode,
+                'social_network_image'
+            );
         }
 
         return $this->translationHelper->getTranslatedContentName($relatedContent, $languageCode);
     }
 
-    protected function handleRelationListValue(RelationListValue $value, $fieldDefinition, $languageCode): string
+    protected function handleRelationListValue(RelationListValue $relationListValue, \Ibexa\Contracts\Core\Repository\Values\ContentType\FieldDefinition $fieldDefinition, string $languageCode): string
     {
-        return $this->relationListField->getName($value, $fieldDefinition, $languageCode);
+        return $this->fieldType->getName($relationListValue, $fieldDefinition, $languageCode);
     }
 
     /**
      * Handle a Image attribute.
      */
-    protected function handleImageValue(ImageValue $value, $fieldDefinitionIdentifier, $languageCode): string
+    protected function handleImageValue(ImageValue $imageValue, string $fieldDefinitionIdentifier, string $languageCode): string
     {
-        if (!$value->uri) {
+        if (!$imageValue->uri) {
             return '';
         }
 
         try {
             return $this->getVariation(
-                $value,
+                $imageValue,
                 $fieldDefinitionIdentifier,
                 $languageCode,
                 'social_network_image'
             );
-        } catch (SourceImageNotFoundException $e) {
+        } catch (SourceImageNotFoundException) {
             return '';
         }
     }
@@ -314,15 +297,15 @@ class MetaNameSchema extends NameSchemaService
     /**
      * Handle a Image Asset attribute.
      */
-    protected function handleImageAssetValue(ImageAssetValue $value, $fieldDefinitionIdentifier, $languageCode): string
+    protected function handleImageAssetValue(ImageAssetValue $imageAssetValue, string $fieldDefinitionIdentifier, string $languageCode): string
     {
-        if (!$value->destinationContentId) {
+        if (!$imageAssetValue->destinationContentId) {
             return '';
         }
 
         try {
-            $content = $this->repository->getContentService()->loadContent($value->destinationContentId);
-        } catch (NotFoundException $e) {
+            $content = $this->repository->getContentService()->loadContent($imageAssetValue->destinationContentId);
+        } catch (NotFoundException) {
             return '';
         }
 
@@ -339,6 +322,7 @@ class MetaNameSchema extends NameSchemaService
      * Override native function as this prevent usage of `()` inside metas in Ibexa 4.6
      * {@inheritDoc}
      */
+    #[\Override]
     protected function filterNameSchema(string $nameSchema): array
     {
         $groupLookupTable = [];

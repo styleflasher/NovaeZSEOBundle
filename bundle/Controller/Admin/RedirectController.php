@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle RedirectController.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Controller\Admin;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -34,13 +35,12 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[Route('/novaseo/redirect')]
 class RedirectController extends Controller
 {
     public const URL_LIMIT = 10;
 
-    #[Route(path: '/list', name: 'novaseo_redirect_list')]
-    public function listAction(
+    #[Route(path: '/novaseo/redirect/list', name: 'novaseo_redirect_list')]
+    public function list(
         Request $request,
         URLWildcardService $urlWildcardService,
         TranslatorInterface $translator,
@@ -62,13 +62,14 @@ class RedirectController extends Controller
         $formDelete->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $source = trim($form->getData()['source']);
-            $destination = trim($form->getData()['destination']);
-            $type = trim($form->getData()['type']);
+            $source = trim((string) $form->getData()['source']);
+            $destination = trim((string) $form->getData()['destination']);
+            $type = trim((string) $form->getData()['type']);
 
             if (!$permissionResolver->hasAccess('novaseobundle.redirects', 'add')) {
                 throw new AccessDeniedException('Limited access !!!');
             }
+
             // verify if URL destination exists in source URL
             try {
                 $urlExists = $urlWildcardService->translate($destination);
@@ -77,7 +78,7 @@ class RedirectController extends Controller
                 $e->getMessage();
             }
 
-            if (('' !== $source || '' !== $destination) && ($source !== $destination) && (null === $urlExists)) {
+            if (('' !== $source || '' !== $destination) && ($source !== $destination) && (!$urlExists instanceof \Ibexa\Contracts\Core\Repository\Values\Content\URLWildcardTranslationResult)) {
                 try {
                     $result = $urlWildcardService->create($source, $destination, $type);
 
@@ -120,7 +121,7 @@ class RedirectController extends Controller
         );
     }
 
-    public function deleteAction(
+    public function delete(
         Request $request,
         URLWildcardService $urlWildcardService,
         LoggerInterface $logger,
@@ -129,6 +130,7 @@ class RedirectController extends Controller
         if (!$permissionResolver->hasAccess('novaseobundle.redirects', 'remove')) {
             throw new AccessDeniedException('Limited access !!!');
         }
+
         $urlWildCardChoice = $request->get('WildcardIDList');
 
         try {
@@ -138,18 +140,18 @@ class RedirectController extends Controller
                     $urlWildcardService->remove($urlWildCard);
                 }
 
-                return new Response(null, 201);
+                return new Response(null, \Symfony\Component\HttpFoundation\Response::HTTP_CREATED);
             }
-        } catch (\Exception $e) {
-            $logger->log(LogLevel::ERROR, $e->getMessage());
+        } catch (\Exception $exception) {
+            $logger->log(LogLevel::ERROR, $exception->getMessage());
         }
 
         return new Response();
     }
 
-    #[Route(path: '/url-redirect-import', name: 'novactive_platform_admin_ui.import-redirect-url')]
-    #[Template('@NovaeZSEO/platform_admin/import_urls.html.twig')]
-    public function importAction(
+    #[Route(path: '/novaseo/redirect/url-redirect-import', name: 'novactive_platform_admin_ui.import-redirect-url')]
+    #[\Symfony\Bridge\Twig\Attribute\Template('@NovaeZSEO/platform_admin/import_urls.html.twig')]
+    public function import(
         Request $request,
         PermissionResolver $permissionResolver,
         ImportUrlsHelper $importUrlsHelper,
@@ -208,15 +210,13 @@ class RedirectController extends Controller
             $params['totalUrls'] = $lastUrlImported['totalUrls'];
         }
 
-        $params += [
+        return $params + [
             'form' => $form->createView(),
         ];
-
-        return $params;
     }
 
-    #[Route(path: '/history-import-redirect-url', name: 'novactive_platform_admin_ui.history-import-redirect-url')]
-    #[Template('@NovaeZSEO/platform_admin/history_urls_imported.html.twig')]
+    #[Route(path: '/novaseo/redirect/history-import-redirect-url', name: 'novactive_platform_admin_ui.history-import-redirect-url')]
+    #[\Symfony\Bridge\Twig\Attribute\Template('@NovaeZSEO/platform_admin/history_urls_imported.html.twig')]
     public function historyUrlsImported(
         Request $request,
         ImportUrlsHelper $importUrlsHelper,
@@ -225,9 +225,10 @@ class RedirectController extends Controller
         if (!$permissionResolver->hasAccess('novaseobundle.redirects', 'import')) {
             throw new AccessDeniedException('Limited access !!!');
         }
+
         $result = $importUrlsHelper->getLogsHistory();
         $params = [];
-        if (count($result) > 0) {
+        if ($result !== []) {
             $page = $request->query->get('page') ?? 1;
             $pagerfanta = new Pagerfanta(new ArrayAdapter($result));
 
@@ -240,8 +241,8 @@ class RedirectController extends Controller
         return $params;
     }
 
-    #[Route(path: '/download-log-redirect-url/{id}', name: 'novactive_platform_admin_ui.download-log-redirect-url')]
-    public function downloadAction(
+    #[Route(path: '/novaseo/redirect/download-log-redirect-url/{id}', name: 'novactive_platform_admin_ui.download-log-redirect-url')]
+    public function download(
         int $id,
         EntityManagerInterface $entityManager,
         ImportUrlsHelper $importUrlsHelper,
@@ -250,10 +251,11 @@ class RedirectController extends Controller
         if (!$permissionResolver->hasAccess('novaseobundle.redirects', 'import')) {
             throw new AccessDeniedException('Limited access !!!');
         }
+
         $log = $entityManager->getRepository(RedirectImportHistory::class)->find($id);
         if ($log instanceof RedirectImportHistory) {
             $fileContent = $importUrlsHelper->downloadFile($log);
-            if ($fileContent) {
+            if ($fileContent !== null && $fileContent !== '' && $fileContent !== '0') {
                 $response = new Response($fileContent);
                 $disposition = $response->headers->makeDisposition(
                     ResponseHeaderBag::DISPOSITION_INLINE,

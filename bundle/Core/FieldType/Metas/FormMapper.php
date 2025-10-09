@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle FormMapper.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Core\FieldType\Metas;
 
 use Ibexa\AdminUi\FieldType\FieldDefinitionFormMapperInterface;
@@ -26,14 +27,11 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class FormMapper implements FieldDefinitionFormMapperInterface, FieldValueFormMapperInterface
 {
-    protected ConfigResolverInterface $configResolver;
-
     /**
      * FormMapper constructor.
      */
-    public function __construct(ConfigResolverInterface $configResolver)
+    public function __construct(protected ConfigResolverInterface $configResolver)
     {
-        $this->configResolver = $configResolver;
     }
 
     /**
@@ -56,6 +54,7 @@ class FormMapper implements FieldDefinitionFormMapperInterface, FieldValueFormMa
                 $aConfigurations[$key] = '';
             }
         }
+
         $data->fieldSettings['configuration'] = $aConfigurations;
 
         $fieldDefinitionForm
@@ -79,7 +78,7 @@ class FormMapper implements FieldDefinitionFormMapperInterface, FieldValueFormMa
      * @param FormInterface $fieldForm form for the current Field
      * @param FieldData     $data      underlying data for current Field form
      */
-    public function mapFieldValueForm(FormInterface $fieldForm, FieldData $data)
+    public function mapFieldValueForm(FormInterface $fieldForm, FieldData $data): void
     {
         $fieldDefinition = $data->fieldDefinition;
         $formConfig = $fieldForm->getConfig();
@@ -93,6 +92,7 @@ class FormMapper implements FieldDefinitionFormMapperInterface, FieldValueFormMa
             if (isset($metasData[$key]) && '' != $metasData[$key]->getFieldType()) {
                 $fieldType = $metasData[$key]->getFieldType();
             }
+
             $data->value->metas[$key] = new Meta($key, $content, $fieldType);
         }
 
@@ -102,6 +102,7 @@ class FormMapper implements FieldDefinitionFormMapperInterface, FieldValueFormMa
                 $data->value->metas[$key] = new Meta($key, '');
             }
         }
+
         // to avoid an 500 error, unset a meta if you have a draft which is not ISO with your configuration YML.
         // able to not delete an enter on the table nova meta.
         // And it preserve your historic for each version of objet
@@ -127,8 +128,8 @@ class FormMapper implements FieldDefinitionFormMapperInterface, FieldValueFormMa
             );
     }
 
-    public function configureOptions(OptionsResolver $resolver)
+    public function configureOptions(OptionsResolver $optionsResolver): void
     {
-        $resolver->setDefault('translation_domain', 'novaseo_content_type');
+        $optionsResolver->setDefault('translation_domain', 'novaseo_content_type');
     }
 }

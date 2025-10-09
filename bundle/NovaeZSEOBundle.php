@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle Bundle.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle;
 
 use LogicException;
@@ -33,17 +34,14 @@ class NovaeZSEOBundle extends Bundle
             ->addTag('seometa.fieldtype');
     }
 
+    #[\Override]
     public function getContainerExtension(): ?ExtensionInterface
     {
         if (null === $this->extension) {
             $extension = $this->createContainerExtension();
 
-            if (null !== $extension) {
-                if (!$extension instanceof ExtensionInterface) {
-                    $fqdn = \get_class($extension);
-                    $message = 'Extension %s must implement %s.';
-                    throw new LogicException(sprintf($message, $fqdn, ExtensionInterface::class));
-                }
+            if ($extension instanceof \Symfony\Component\DependencyInjection\Extension\ExtensionInterface) {
+
                 $this->extension = $extension;
             } else {
                 $this->extension = false;

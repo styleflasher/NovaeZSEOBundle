@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle MetasFieldType.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Form\Type;
 
 use Novactive\Bundle\eZSEOBundle\Core\FieldType\Metas\Value;
@@ -27,6 +28,7 @@ class MetasFieldType extends AbstractType
         return $this->getBlockPrefix();
     }
 
+    #[\Override]
     public function getBlockPrefix(): string
     {
         return 'novaseo_fieldtype_metas';

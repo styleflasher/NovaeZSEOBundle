@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle ImportUrlsHelper.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Core\Helper;
 
 use DateTime;
@@ -24,63 +25,15 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ImportUrlsHelper
 {
-    /**
-     * @var URLWildcardService
-     */
-    private $urlWildCardService;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var TranslatorInterface
-     */
-    private $translator;
-
-    /**
-     * @var EntityManagerInterface
-     */
-    private $entityManager;
-
-    /**
-     * @var Filesystem
-     */
-    private $fs;
-
-    /**
-     * @var IOService
-     */
-    private $ioService;
-
-    /**
-     * @var string
-     */
-    private $cacheDirectory;
-
-    public function __construct(
-        IOService $ioService,
-        URLWildcardService $urlWildcardService,
-        EntityManagerInterface $entityManager,
-        TranslatorInterface $translator,
-        LoggerInterface $logger,
-        Filesystem $fileSystem,
-        string $cacheDirectory
-    ) {
-        $this->urlWildCardService = $urlWildcardService;
-        $this->entityManager = $entityManager;
-        $this->cacheDirectory = $cacheDirectory;
-        $this->translator = $translator;
-        $this->logger = $logger;
-        $this->fs = $fileSystem;
-        $this->ioService = $ioService;
+    public function __construct(private readonly IOService $ioService, private readonly URLWildcardService $urlWildCardService, private readonly EntityManagerInterface $entityManager, private readonly TranslatorInterface $translator, private readonly LoggerInterface $logger, private readonly Filesystem $filesystem, private readonly string $cacheDirectory)
+    {
     }
 
     public function importUrlRedirection(string $filePath): array
     {
         $counter = 0;
-        $params = $return = [];
+        $params = [];
+        $return = [];
 
         $fileToImport = fopen($filePath, 'r');
         if (false !== $fileToImport) {
@@ -88,15 +41,15 @@ class ImportUrlsHelper
             $totalUrls = 0;
             $filename = 'redirectUrls/report/redirect_import_urls-'.date('d-m-Y-H-i-s').'.csv';
             $filePath = $this->cacheDirectory.$filename;
-            $this->fs->dumpFile($filePath, "Source;Destination;Message;Status\n");
+            $this->filesystem->dumpFile($filePath, "Source;Destination;Message;Status\n");
 
             while (false !== ($data = fgetcsv($fileToImport, 1000, ';'))) {
-                if (0 == $counter) {
+                if (0 === $counter) {
                     ++$counter;
                     continue;
                 }
 
-                if (isset($data[0]) and isset($data[1])) {
+                if (isset($data[0]) && isset($data[1])) {
                     $source = $data[0]; // source
                     $destination = $data[1]; // destination
                     ++$totalUrls;
@@ -104,8 +57,8 @@ class ImportUrlsHelper
                     $verifResult = $this->checkUrlDestinationExist($destination);
 
                     if (
-                        ('' != $source || '' != $destination)
-                        && ($source != $destination)
+                        ('' !== $source || '' !== $destination)
+                        && ($source !== $destination)
                         && !$verifResult
                     ) {
                         // try to save data in table ezurlwildcard
@@ -113,6 +66,7 @@ class ImportUrlsHelper
                         if ('OK' === $saveResult['imported']) {
                             ++$totalImported;
                         }
+
                         $return[] = $saveResult;
                     } else {
                         $msg = $this->translator->trans('nova.import.list.table.exists', [], 'redirect');
@@ -123,9 +77,9 @@ class ImportUrlsHelper
                             'msg' => $msg,
                             'imported' => $status,
                         ];
-                        $this->fs->appendToFile(
+                        $this->filesystem->appendToFile(
                             $filePath,
-                            "$source;$destination;$msg;$status\n"
+                            sprintf('%s;%s;%s;%s%s', $source, $destination, $msg, $status, PHP_EOL)
                         );
                     }
                 } else {
@@ -142,7 +96,7 @@ class ImportUrlsHelper
                     $uploadedFileStruct = $this->ioService->newBinaryCreateStructFromLocalFile($filePath);
                     $uploadedFileStruct->id = $filename;
                     $this->ioService->createBinaryFile($uploadedFileStruct);
-                    $this->fs->remove($filePath);
+                    $this->filesystem->remove($filePath);
                 } catch (\Exception $e) {
                     $this->logger->log(LogLevel::ERROR, $e->getMessage());
                 }
@@ -165,8 +119,8 @@ class ImportUrlsHelper
 
         try {
             $urlExists = $this->urlWildCardService->translate($destination);
-        } catch (\Exception $e) {
-            $this->logger->log(LogLevel::ERROR, $e->getMessage());
+        } catch (\Exception $exception) {
+            $this->logger->log(LogLevel::ERROR, $exception->getMessage());
         }
 
         return $urlExists;
@@ -187,25 +141,25 @@ class ImportUrlsHelper
 
                 $msg = $return['msg'];
                 $status = $return['imported'];
-                $this->fs->appendToFile(
+                $this->filesystem->appendToFile(
                     $filePath,
-                    "$source;$destination;$msg;$status\n"
+                    sprintf('%s;%s;%s;%s%s', $source, $destination, $msg, $status, PHP_EOL)
                 );
             }
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             $return = [
                 'source' => $source,
                 'destination' => $destination,
-                'msg' => $e->getMessage(),
+                'msg' => $exception->getMessage(),
                 'imported' => 'KO',
             ];
             $msg = $return['msg'];
             $status = $return['imported'];
-            $this->fs->appendToFile(
+            $this->filesystem->appendToFile(
                 $filePath,
-                "$source;$destination;$msg;$status\n"
+                sprintf('%s;%s;%s;%s%s', $source, $destination, $msg, $status, PHP_EOL)
             );
-            $this->logger->log(LogLevel::ERROR, $e->getMessage());
+            $this->logger->log(LogLevel::ERROR, $exception->getMessage());
         }
 
         return $return;
@@ -220,19 +174,19 @@ class ImportUrlsHelper
             $redirectImportHistory->setPath($fileLog);
             $this->entityManager->persist($redirectImportHistory);
             $this->entityManager->flush();
-        } catch (\Exception $e) {
-            $this->logger->log(LogLevel::ERROR, $e->getMessage());
+        } catch (\Exception $exception) {
+            $this->logger->log(LogLevel::ERROR, $exception->getMessage());
         }
     }
 
-    public function downloadFile(RedirectImportHistory $log): ?string
+    public function downloadFile(RedirectImportHistory $redirectImportHistory): ?string
     {
         try {
-            $file = $this->ioService->loadBinaryFile($log->getPath());
+            $file = $this->ioService->loadBinaryFile($redirectImportHistory->getPath());
 
             return $this->ioService->getFileContents($file);
-        } catch (\Exception $e) {
-            $this->logger->log(LogLevel::ERROR, $e->getMessage());
+        } catch (\Exception $exception) {
+            $this->logger->log(LogLevel::ERROR, $exception->getMessage());
         }
 
         return null;

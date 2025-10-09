@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle SeoMetadataFieldTypeRegistry.
  *
@@ -9,7 +11,6 @@
  * @copyright 2021 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Core\FieldType\MetaFieldConverter;
 
 use Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface;
@@ -30,22 +31,20 @@ class SeoMetadataFieldTypeRegistry
      */
     public function __construct(iterable $metaFieldTypes)
     {
-        foreach ($metaFieldTypes as $metaFieldType) {
-            $this->addMetaFieldType($metaFieldType);
+        foreach ($metaFieldTypes as $metumFieldType) {
+            $this->addMetaFieldType($metumFieldType);
         }
     }
 
-    /**
-     * @required
-     */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setConfigResolver(ConfigResolverInterface $configResolver): void
     {
         $this->configResolver = $configResolver;
     }
 
-    public function addMetaFieldType(SeoMetadataFieldTypeInterface $metaFieldType): void
+    public function addMetaFieldType(SeoMetadataFieldTypeInterface $seoMetadataFieldType): void
     {
-        $this->metaFieldTypes[] = $metaFieldType;
+        $this->metaFieldTypes[] = $seoMetadataFieldType;
     }
 
     public function fromHash($hash): array
@@ -57,26 +56,29 @@ class SeoMetadataFieldTypeRegistry
             if (!is_array($hashItem)) {
                 continue;
             }
+
             $fieldConfig = $metasConfig[$hashItem['meta_name']] ?? null;
             $fieldType = $fieldConfig['type'] ?? SeoMetadataDefaultFieldType::IDENTIFIER;
-            foreach ($this->metaFieldTypes as $metaFieldType) {
-                if (!$metaFieldType->support($fieldType)) {
+            foreach ($this->metaFieldTypes as $metumFieldType) {
+                if (!$metumFieldType->support($fieldType)) {
                     continue;
                 }
-                $metas[] = $metaFieldType->fromHash($hashItem);
+
+                $metas[] = $metumFieldType->fromHash($hashItem);
             }
         }
 
         return $metas;
     }
 
-    public function mapForm(FormBuilderInterface &$builder, array $params, string $fieldType)
+    public function mapForm(FormBuilderInterface &$formBuilder, array $params, string $fieldType): void
     {
-        foreach ($this->metaFieldTypes as $metaFieldType) {
-            if (!$metaFieldType->support($fieldType)) {
+        foreach ($this->metaFieldTypes as $metumFieldType) {
+            if (!$metumFieldType->support($fieldType)) {
                 continue;
             }
-            $metaFieldType->mapForm($builder, $params);
+
+            $metumFieldType->mapForm($formBuilder, $params);
         }
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle SitemapController.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Controller;
 
 use DateTime;
@@ -41,59 +42,62 @@ class SitemapController extends Controller
     }
 
     #[Route(path: '/sitemap.xml', name: '_novaseo_sitemap_index', methods: ['GET'])]
-    public function indexAction(QueryFactory $queryFactory): Response
+    public function index(QueryFactory $queryFactory): Response
     {
         $searchService = $this->getRepository()->getSearchService();
-        $query = $queryFactory();
-        $query->limit = 0;
-        $resultCount = $searchService->findLocations($query)->totalCount;
+        $locationQuery = $queryFactory();
+        $locationQuery->limit = 0;
+
+        $resultCount = $searchService->findLocations($locationQuery)->totalCount;
 
         // Dom Doc
-        $sitemap = new DOMDocument('1.0', 'UTF-8');
-        $sitemap->formatOutput = true;
+        $domDocument = new DOMDocument('1.0', 'UTF-8');
+        $domDocument->formatOutput = true;
 
         // create an index if we are greater than th PACKET_MAX
         if ($resultCount > static::PACKET_MAX) {
-            $root = $sitemap->createElement('sitemapindex');
+            $root = $domDocument->createElement('sitemapindex');
             $root->setAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
-            $sitemap->appendChild($root);
+            $domDocument->appendChild($root);
 
-            $this->fillSitemapIndex($sitemap, $resultCount, $root);
+            $this->fillSitemapIndex($domDocument, $resultCount, $root);
         } else {
             // if we are less or equal than the PACKET_SIZE, redo the search with no limit and list directly the urlmap
-            $query->limit = $resultCount;
-            $results = $searchService->findLocations($query);
-            $root = $sitemap->createElement('urlset');
+            $locationQuery->limit = $resultCount;
+            $results = $searchService->findLocations($locationQuery);
+            $root = $domDocument->createElement('urlset');
             $root->setAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
             $root->setAttribute('xmlns:image', 'http://www.google.com/schemas/sitemap-image/1.1');
-            $this->fillSitemap($sitemap, $root, $results);
-            $sitemap->appendChild($root);
+            $this->fillSitemap($domDocument, $root, $results);
+            $domDocument->appendChild($root);
         }
 
-        $response = new Response($sitemap->saveXML(), 200, ['Content-type' => 'text/xml']);
+        $response = new Response($domDocument->saveXML(), \Symfony\Component\HttpFoundation\Response::HTTP_OK, ['Content-type' => 'text/xml']);
         $response->setSharedMaxAge(86400);
 
         return $response;
     }
 
     #[Route(path: '/sitemap-{page}.xml', name: '_novaseo_sitemap_page', requirements: ['page' => '\\d+'], defaults: ['page' => 1], methods: ['GET'])]
-    public function pageAction(QueryFactory $queryFactory, int $page = 1): Response
+    public function page(QueryFactory $queryFactory, int $page = 1): Response
     {
-        $sitemap = new DOMDocument('1.0', 'UTF-8');
-        $root = $sitemap->createElement('urlset');
-        $sitemap->formatOutput = true;
+        $domDocument = new DOMDocument('1.0', 'UTF-8');
+        $root = $domDocument->createElement('urlset');
+        $domDocument->formatOutput = true;
         $root->setAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
         $root->setAttribute('xmlns:image', 'http://www.google.com/schemas/sitemap-image/1.1');
-        $sitemap->appendChild($root);
-        $query = $queryFactory();
-        $query->limit = static::PACKET_MAX;
-        $query->offset = static::PACKET_MAX * ($page - 1);
+
+        $domDocument->appendChild($root);
+        $locationQuery = $queryFactory();
+        $locationQuery->limit = static::PACKET_MAX;
+        $locationQuery->offset = static::PACKET_MAX * ($page - 1);
+
         $searchService = $this->getRepository()->getSearchService();
 
-        $results = $searchService->findLocations($query);
-        $this->fillSitemap($sitemap, $root, $results);
+        $searchResult = $searchService->findLocations($locationQuery);
+        $this->fillSitemap($domDocument, $root, $searchResult);
 
-        $response = new Response($sitemap->saveXML(), 200, ['Content-type' => 'text/xml']);
+        $response = new Response($domDocument->saveXML(), \Symfony\Component\HttpFoundation\Response::HTTP_OK, ['Content-type' => 'text/xml']);
         $response->setSharedMaxAge(86400);
 
         return $response;
@@ -102,9 +106,9 @@ class SitemapController extends Controller
     /**
      * Fill a sitemap.
      */
-    protected function fillSitemap(DOMDocument $sitemap, \DOMElement $root, SearchResult $results): void
+    protected function fillSitemap(DOMDocument $domDocument, \DOMElement $domElement, SearchResult $searchResult): void
     {
-        foreach ($results->searchHits as $searchHit) {
+        foreach ($searchResult->searchHits as $searchHit) {
             /** @var Location $location */
             $location = $searchHit->valueObject;
 
@@ -118,18 +122,19 @@ class SitemapController extends Controller
                 if ($this->has('logger')) {
                     $this->get('logger')->error('NovaeZSEO: '.$exception->getMessage());
                 }
+
                 continue;
             }
 
-            if (0 != strpos($url, 'view/content/')) {
+            if (!str_starts_with($url, 'view/content/')) {
                 continue;
             }
 
             $modified = $location->contentInfo->modificationDate ?
                 $location->contentInfo->modificationDate->format('c') : null;
-            $loc = $sitemap->createElement('loc', $url);
-            $lastmod = $sitemap->createElement('lastmod', $modified);
-            $urlElt = $sitemap->createElement('url');
+            $loc = $domDocument->createElement('loc', $url);
+            $lastmod = $domDocument->createElement('lastmod', $modified);
+            $urlElt = $domDocument->createElement('url');
 
             // Inject the image tags if config is enabl
 
@@ -150,13 +155,14 @@ class SitemapController extends Controller
                     if ($this->fieldHelper->isFieldEmpty($content, $field->fieldDefIdentifier)) {
                         continue;
                     }
+
                     $variation = $this->imageVariationService->getVariation(
                         $field,
                         $content->getVersionInfo(),
                         'original'
                     );
-                    $imageContainer = $sitemap->createElement('image:image');
-                    $imageLoc = $sitemap->createElement('image:loc', $variation->uri);
+                    $imageContainer = $domDocument->createElement('image:image');
+                    $imageLoc = $domDocument->createElement('image:loc', $variation->uri);
                     $imageContainer->appendChild($imageLoc);
                     $urlElt->appendChild($imageContainer);
                 }
@@ -164,18 +170,18 @@ class SitemapController extends Controller
 
             $urlElt->appendChild($loc);
             $urlElt->appendChild($lastmod);
-            $root->appendChild($urlElt);
+            $domElement->appendChild($urlElt);
         }
     }
 
     /**
      * Fill the sitemap index.
      */
-    protected function fillSitemapIndex(DOMDocument $sitemap, int $numberOfResults, \DOMElement $root): void
+    protected function fillSitemapIndex(DOMDocument $domDocument, int $numberOfResults, \DOMElement $domElement): void
     {
         $numberOfPage = (int) ceil($numberOfResults / static::PACKET_MAX);
         for ($sitemapNumber = 1; $sitemapNumber <= $numberOfPage; ++$sitemapNumber) {
-            $sitemapElt = $sitemap->createElement('sitemap');
+            $sitemapElt = $domDocument->createElement('sitemap');
 
             try {
                 $locUrl = $this->generateUrl(
@@ -187,16 +193,17 @@ class SitemapController extends Controller
                 if ($this->has('logger')) {
                     $this->get('logger')->error('NovaeZSEO: '.$exception->getMessage());
                 }
+
                 continue;
             }
 
-            $loc = $sitemap->createElement('loc', $locUrl);
+            $loc = $domDocument->createElement('loc', $locUrl);
             $date = new DateTime();
             $modificationDate = $date->format('c');
-            $mod = $sitemap->createElement('lastmod', $modificationDate);
+            $mod = $domDocument->createElement('lastmod', $modificationDate);
             $sitemapElt->appendChild($loc);
             $sitemapElt->appendChild($mod);
-            $root->appendChild($sitemapElt);
+            $domElement->appendChild($sitemapElt);
         }
     }
 }

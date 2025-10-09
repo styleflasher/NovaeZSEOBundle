@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle Configuration.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\DependencyInjection;
 
 use Ibexa\Bundle\Core\DependencyInjection\Configuration\SiteAccessAware\Configuration as SAConfiguration;
@@ -20,9 +21,9 @@ class Configuration extends SAConfiguration
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('nova_ezseo');
-        $rootNode = $treeBuilder->getRootNode();
-        $systemNode = $this->generateScopeBaseNode($rootNode);
-        $systemNode
+        $nodeDefinition = $treeBuilder->getRootNode();
+        $nodeBuilder = $this->generateScopeBaseNode($nodeDefinition);
+        $nodeBuilder
             ->scalarNode('custom_fallback_service')->defaultValue('~')->end()
             ->scalarNode('google_verification')->defaultValue('~')->end()
             ->scalarNode('google_gatracker')->defaultValue('~')->end()
@@ -95,9 +96,7 @@ class Configuration extends SAConfiguration
             ->beforeNormalization()
             ->ifString()
             ->then(
-                function ($value) {
-                    return ['path' => $value];
-                }
+                fn($value): array => ['path' => $value]
             )
             ->end()
             ->children()

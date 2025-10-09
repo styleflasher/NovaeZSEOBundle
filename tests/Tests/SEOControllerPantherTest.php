@@ -21,18 +21,20 @@ class SEOControllerPantherTest extends PantherTestCase
 {
     public function testRobotTxt(): void
     {
-        $helper = new BrowserHelper($this->getPantherClient());
-        $helper->get('/robots.txt');
-        $source = $helper->client()->getPageSource();
+        $browserHelper = new BrowserHelper($this->getPantherClient());
+        $browserHelper->get('/robots.txt');
+
+        $source = $browserHelper->client()->getPageSource();
 
         $this->assertStringContainsString('User-agent: *', $source);
     }
 
     public function testGoogleVerification(): void
     {
-        $helper = new BrowserHelper($this->getPantherClient());
-        $helper->get('/googleplop2test42.html');
-        $source = $helper->client()->getPageSource();
+        $browserHelper = new BrowserHelper($this->getPantherClient());
+        $browserHelper->get('/googleplop2test42.html');
+
+        $source = $browserHelper->client()->getPageSource();
 
         $this->assertStringContainsString('google-site-verification', $source);
         $this->assertStringContainsString('googleplop2test42.html', $source);
@@ -40,8 +42,8 @@ class SEOControllerPantherTest extends PantherTestCase
 
     public function testBingSiteAuth(): void
     {
-        $helper = new BrowserHelper($this->getPantherClient());
-        $crawler = $helper->get('/BingSiteAuth.xml');
+        $browserHelper = new BrowserHelper($this->getPantherClient());
+        $crawler = $browserHelper->get('/BingSiteAuth.xml');
         $this->assertEquals(1, $crawler->filter('users')->count());
     }
 }

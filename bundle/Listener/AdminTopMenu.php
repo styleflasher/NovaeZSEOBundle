@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle MenuListener or Admin UI.
  *
@@ -9,7 +11,6 @@
  * @copyright 2019 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Listener;
 
 use Ibexa\AdminUi\Menu\Event\ConfigureMenuEvent;
@@ -21,13 +22,14 @@ class AdminTopMenu
     {
     }
 
-    public function onMenuConfigure(ConfigureMenuEvent $event): void
+    public function onMenuConfigure(ConfigureMenuEvent $configureMenuEvent): void
     {
         if (!$this->permissionResolver->hasAccess('novaseobundle.redirects', 'view')) {
             return;
         }
-        $menu = $event->getMenu();
-        $menu->addChild(
+
+        $item = $configureMenuEvent->getMenu();
+        $item->addChild(
             'nova_create_redirect'
         )
             ->setLabel('menu.main_menu.header')
@@ -38,7 +40,7 @@ class AdminTopMenu
             ->setAttribute('data-tooltip-placement', 'right')
             ->setAttribute('data-tooltip-extra-class', 'ibexa-tooltip--info-neon');
 
-        $contentMenu = $menu['nova_create_redirect'];
+        $contentMenu = $item['nova_create_redirect'];
 
         $contentMenu
             ->addChild(

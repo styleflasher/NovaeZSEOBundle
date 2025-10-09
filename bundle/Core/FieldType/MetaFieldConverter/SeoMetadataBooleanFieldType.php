@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle SeoMetadataBooleanFieldType.
  *
@@ -9,7 +11,6 @@
  * @copyright 2021 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Core\FieldType\MetaFieldConverter;
 
 use Novactive\Bundle\eZSEOBundle\Core\Meta;
@@ -20,22 +21,24 @@ class SeoMetadataBooleanFieldType extends SeoMetadataDefaultFieldType
 {
     public const IDENTIFIER = 'boolean';
 
+    #[\Override]
     public function fromHash($hash): Meta
     {
         $meta = parent::fromHash($hash);
-        $content = '1' == $hash['meta_content'] ? true : false;
+        $content = '1' == $hash['meta_content'];
         $meta->setContent($content);
 
         return $meta;
     }
 
-    public function mapForm(FormBuilderInterface &$builder, array $params)
+    #[\Override]
+    public function mapForm(FormBuilderInterface &$formBuilder, array $params): void
     {
         $option = [
             'class' => 'form-control',
             'false_values' => '0',
         ];
-        $builder->add(
+        $formBuilder->add(
             'content',
             CheckboxType::class,
             array_merge($params, $option)

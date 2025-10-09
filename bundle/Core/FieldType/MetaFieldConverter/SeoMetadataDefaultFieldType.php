@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle SeoMetadataDefaultFieldType.
  *
@@ -9,7 +11,6 @@
  * @copyright 2021 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Core\FieldType\MetaFieldConverter;
 
 use Novactive\Bundle\eZSEOBundle\Core\Meta;
@@ -30,16 +31,17 @@ class SeoMetadataDefaultFieldType implements SeoMetadataFieldTypeInterface
         $meta = new Meta();
         $meta->setName($hash['meta_name']);
         $meta->setFieldType(self::IDENTIFIER);
+
         $content = $hash['meta_content'];
         $meta->setContent($content);
 
         return $meta;
     }
 
-    public function mapForm(FormBuilderInterface &$builder, array $params)
+    public function mapForm(FormBuilderInterface &$formBuilder, array $params): void
     {
         $params['empty_data'] = '';
-        $builder->add(
+        $formBuilder->add(
             'content',
             TextType::class,
             $params

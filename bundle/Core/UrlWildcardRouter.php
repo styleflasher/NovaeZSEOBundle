@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle Bundle.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Core;
 
 use Ibexa\Contracts\Core\Repository\URLWildcardService;
@@ -20,27 +21,27 @@ use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 class UrlWildcardRouter extends BaseUrlWildcardRouter
 {
-    /** @var URLWildcardService */
-    private $wildcardService;
+    private ?\Ibexa\Contracts\Core\Repository\URLWildcardService $urlWildcardService = null;
 
-    public function setWildcardService(URLWildcardService $wildcardService): void
+    public function setWildcardService(URLWildcardService $urlWildcardService): void
     {
-        $this->wildcardService = $wildcardService;
+        $this->urlWildcardService = $urlWildcardService;
     }
 
+    #[\Override]
     public function matchRequest(Request $request): array
     {
         try {
             // Manage full url : http://host.com/uri
             $requestedPath = $request->getPathInfo();
             $requestUriFull = $request->getSchemeAndHttpHost().$requestedPath;
-            $urlWildcard = $this->wildcardService->translate($requestUriFull);
-        } catch (\Exception $e) {
+            $urlWildcard = $this->urlWildcardService->translate($requestUriFull);
+        } catch (\Exception $exception) {
             try {
                 // Manage full url : /uri
-                $urlWildcard = $this->wildcardService->translate($requestedPath);
-            } catch (\Exception $e) {
-                throw new ResourceNotFoundException($e->getMessage(), $e->getCode(), $e);
+                $urlWildcard = $this->urlWildcardService->translate($requestedPath);
+            } catch (\Exception $exception) {
+                throw new ResourceNotFoundException($exception->getMessage(), $exception->getCode(), $exception);
             }
         }
 
@@ -48,11 +49,11 @@ class UrlWildcardRouter extends BaseUrlWildcardRouter
             '_route' => UrlAliasRouter::URL_ALIAS_ROUTE_NAME,
         ];
 
-        if (0 === strpos($urlWildcard->uri, 'http://') || 'https://' === substr($urlWildcard->uri, 0, 8)) {
-            $params += ['semanticPathinfo' => trim($urlWildcard->uri, '/')];
+        if (str_starts_with((string) $urlWildcard->uri, 'http://') || str_starts_with((string) $urlWildcard->uri, 'https://')) {
+            $params += ['semanticPathinfo' => trim((string) $urlWildcard->uri, '/')];
             $params += ['prependSiteaccessOnRedirect' => false];
         } else {
-            $params += ['semanticPathinfo' => '/'.trim($urlWildcard->uri, '/')];
+            $params += ['semanticPathinfo' => '/'.trim((string) $urlWildcard->uri, '/')];
         }
 
         // In URLAlias terms, "forward" means "redirect".

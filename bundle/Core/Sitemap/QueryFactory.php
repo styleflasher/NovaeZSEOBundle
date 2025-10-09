@@ -24,11 +24,11 @@ class QueryFactory
     protected function getLocation(int $locationId): ?Location
     {
         return $this->repository->sudo(
-            function (Repository $repository) use ($locationId) {
+            function (Repository $repository) use ($locationId): ?\Ibexa\Contracts\Core\Repository\Values\Content\Location {
                 $locationService = $repository->getLocationService();
                 try {
                     return $locationService->loadLocation($locationId);
-                } catch (NotFoundException $e) {
+                } catch (NotFoundException) {
                     return null;
                 }
             }
@@ -110,30 +110,33 @@ class QueryFactory
         foreach ($contentTypeIdentifiers as $contentTypeIdentifier) {
             try {
                 $contentTypeService->loadContentTypeByIdentifier($contentTypeIdentifier);
-            } catch (NotFoundException $exception) {
+            } catch (NotFoundException) {
                 continue;
             }
+
             $criteria[] = new Criterion\ContentTypeIdentifier($contentTypeIdentifier);
         }
 
         foreach ($subtreeLocationsId as $locationId) {
             $excludedLocation = $this->getLocation($locationId);
-            if (null === $excludedLocation) {
+            if (!$excludedLocation instanceof \Ibexa\Contracts\Core\Repository\Values\Content\Location) {
                 continue;
             }
+
             $criteria[] = new Criterion\Subtree($excludedLocation->pathString);
         }
 
         foreach ($locationIds as $locationId) {
             $excludedLocation = $this->getLocation($locationId);
-            if (null === $excludedLocation) {
+            if (!$excludedLocation instanceof \Ibexa\Contracts\Core\Repository\Values\Content\Location) {
                 continue;
             }
+
             $criteria[] = new Criterion\LocationId($locationId);
         }
 
-        foreach ($objectStates as $objectStateData) {
-            foreach ($objectStateData as $objectStateGroupIdentifier => $objectStateIdentifiers) {
+        foreach ($objectStates as $objectState) {
+            foreach ($objectState as $objectStateGroupIdentifier => $objectStateIdentifiers) {
                 try {
                     $service = $this->repository->getObjectStateService();
                     $group = $service->loadObjectStateGroupByIdentifier($objectStateGroupIdentifier);
@@ -141,16 +144,14 @@ class QueryFactory
                         $state = $service->loadObjectStateByIdentifier($group, $objectStateIdentifier);
                         $criteria[] = new Criterion\ObjectStateIdentifier($state->identifier, $group->identifier);
                     }
-                } catch (NotFoundException $notFoundException) {
+                } catch (NotFoundException) {
                     continue;
                 }
             }
         }
 
         return array_map(
-            function ($criterion) {
-                return new Criterion\LogicalNot($criterion);
-            },
+            fn(\Ibexa\Contracts\Core\Repository\Values\Content\Query\Criterion\ContentTypeIdentifier|\Ibexa\Contracts\Core\Repository\Values\Content\Query\Criterion\LocationId|\Ibexa\Contracts\Core\Repository\Values\Content\Query\Criterion\ObjectStateIdentifier|\Ibexa\Contracts\Core\Repository\Values\Content\Query\Criterion\Subtree $criterion): \Ibexa\Contracts\Core\Repository\Values\Content\Query\Criterion\LogicalNot => new Criterion\LogicalNot($criterion),
             $criteria
         );
     }
@@ -167,30 +168,31 @@ class QueryFactory
         $criteria = [];
 
         $validContentTypeIdentifiers = $this->getValidContentTypeIdentifiers($contentTypeIdentifiers);
-        if (count($validContentTypeIdentifiers)) {
+        if ($validContentTypeIdentifiers !== []) {
             $criteria[] = new Criterion\ContentTypeIdentifier($validContentTypeIdentifiers);
         }
 
         $subtreePaths = $this->getSubtreePathList($subtreeLocationsId);
-        if (count($subtreePaths)) {
+        if ($subtreePaths !== []) {
             $criteria[] = new Criterion\Subtree($subtreePaths);
         }
 
         $validLocationIds = [];
         foreach ($locationIds as $locationId) {
             $includedLocation = $this->getLocation($locationId);
-            if (null === $includedLocation) {
+            if (!$includedLocation instanceof \Ibexa\Contracts\Core\Repository\Values\Content\Location) {
                 continue;
             }
+
             $validLocationIds[] = $locationId;
         }
 
-        if (count($validLocationIds) > 0) {
+        if ($validLocationIds !== []) {
             $criteria[] = new Criterion\LocationId($validLocationIds);
         }
 
-        foreach ($objectStates as $objectStateData) {
-            foreach ($objectStateData as $objectStateGroupIdentifier => $objectStateIdentifiers) {
+        foreach ($objectStates as $objectState) {
+            foreach ($objectState as $objectStateGroupIdentifier => $objectStateIdentifiers) {
                 $validStateIdentifiers = [];
                 try {
                     $service = $this->repository->getObjectStateService();
@@ -199,10 +201,11 @@ class QueryFactory
                         $state = $service->loadObjectStateByIdentifier($group, $objectStateIdentifier);
                         $validStateIdentifiers[] = $state->identifier;
                     }
-                } catch (NotFoundException $notFoundException) {
+                } catch (NotFoundException) {
                     continue;
                 }
-                if (count($validStateIdentifiers) > 0) {
+
+                if ($validStateIdentifiers !== []) {
                     $criteria[] = new Criterion\ObjectStateIdentifier(
                         $validStateIdentifiers,
                         $objectStateGroupIdentifier
@@ -219,7 +222,7 @@ class QueryFactory
         $validContentTypeIdentifiers = [];
         foreach ($contentTypeIdentifiers as $contentTypeIdentifier) {
             $contentType = $this->getContentType($contentTypeIdentifier);
-            if ($contentType) {
+            if ($contentType instanceof \Ibexa\Contracts\Core\Repository\Values\ContentType\ContentType) {
                 $validContentTypeIdentifiers[] = $contentType->identifier;
             }
         }
@@ -231,7 +234,7 @@ class QueryFactory
     {
         try {
             return $this->repository->getContentTypeService()->loadContentTypeByIdentifier($contentTypeIdentifier);
-        } catch (NotFoundException $exception) {
+        } catch (NotFoundException) {
             return null;
         }
     }
@@ -239,11 +242,12 @@ class QueryFactory
     protected function getSubtreePathList(array $subtreeLocationsId): array
     {
         $subtreePaths = [];
-        foreach ($subtreeLocationsId as $locationId) {
-            $includedLocation = $this->getLocation($locationId);
-            if (!$includedLocation) {
+        foreach ($subtreeLocationsId as $subtreeLocationId) {
+            $includedLocation = $this->getLocation($subtreeLocationId);
+            if (!$includedLocation instanceof \Ibexa\Contracts\Core\Repository\Values\Content\Location) {
                 continue;
             }
+
             $subtreePaths[] = $includedLocation->pathString;
         }
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle SeoMetadataFieldTypeInterface.
  *
@@ -9,7 +11,6 @@
  * @copyright 2021 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Core\FieldType\MetaFieldConverter;
 
 use Novactive\Bundle\eZSEOBundle\Core\Meta;
@@ -21,5 +22,5 @@ interface SeoMetadataFieldTypeInterface
 
     public function support(string $fieldType): bool;
 
-    public function mapForm(FormBuilderInterface &$builder, array $params);
+    public function mapForm(FormBuilderInterface &$formBuilder, array $params);
 }

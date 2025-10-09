@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle ImportUrlsType.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\Form\Type;
 
 use Symfony\Component\Form\AbstractType;
@@ -34,6 +35,7 @@ class ImportUrlsType extends AbstractType
             );
     }
 
+    #[\Override]
     public function getBlockPrefix(): string
     {
         return 'novaseo_import_urls';

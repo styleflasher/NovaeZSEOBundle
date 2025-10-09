@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * NovaeZSEOBundle Extension.
  *
@@ -9,7 +11,6 @@
  * @copyright 2015 Novactive
  * @license   https://github.com/Novactive/NovaeZSEOBundle/blob/master/LICENSE MIT Licence
  */
-
 namespace Novactive\Bundle\eZSEOBundle\DependencyInjection;
 
 use Ibexa\Bundle\Core\DependencyInjection\Configuration\SiteAccessAware\ConfigurationProcessor;
@@ -24,6 +25,7 @@ use Symfony\Component\Yaml\Yaml;
 
 class NovaeZSEOExtension extends Extension implements PrependExtensionInterface
 {
+    #[\Override]
     public function getAlias(): string
     {
         return 'nova_ezseo';
@@ -54,29 +56,29 @@ class NovaeZSEOExtension extends Extension implements PrependExtensionInterface
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('services.yml');
-        $loader->load('services_nonautowired.yml');
-        $loader->load('default_settings.yml');
-        $loader->load('admin_ui/services.yml');
+        $yamlFileLoader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        $yamlFileLoader->load('services.yml');
+        $yamlFileLoader->load('services_nonautowired.yml');
+        $yamlFileLoader->load('default_settings.yml');
+        $yamlFileLoader->load('admin_ui/services.yml');
 
-        $processor = new ConfigurationProcessor($container, 'nova_ezseo');
-        $processor->mapSetting('fieldtype_metas_identifier', $config);
-        $processor->mapSetting('fieldtype_metas', $config);
-        $processor->mapSetting('google_verification', $config);
-        $processor->mapSetting('google_gatracker', $config);
-        $processor->mapSetting('google_anonymizeIp', $config);
-        $processor->mapSetting('bing_verification', $config);
-        $processor->mapSetting('limit_to_rootlocation', $config);
-        $processor->mapSetting('display_images_in_sitemap', $config);
-        $processor->mapSetting('robots', $config);
-        $processor->mapConfigArray('fieldtype_metas', $config, ContextualizerInterface::MERGE_FROM_SECOND_LEVEL);
-        $processor->mapConfigArray('default_metas', $config);
-        $processor->mapConfigArray('default_links', $config);
-        $processor->mapConfigArray('sitemap_excludes', $config, ContextualizerInterface::MERGE_FROM_SECOND_LEVEL);
-        $processor->mapConfigArray('sitemap_includes', $config, ContextualizerInterface::MERGE_FROM_SECOND_LEVEL);
-        $processor->mapConfigArray('robots_disallow', $config);
-        $processor->mapConfigArray('robots', $config, ContextualizerInterface::MERGE_FROM_SECOND_LEVEL);
+        $configurationProcessor = new ConfigurationProcessor($container, 'nova_ezseo');
+        $configurationProcessor->mapSetting('fieldtype_metas_identifier', $config);
+        $configurationProcessor->mapSetting('fieldtype_metas', $config);
+        $configurationProcessor->mapSetting('google_verification', $config);
+        $configurationProcessor->mapSetting('google_gatracker', $config);
+        $configurationProcessor->mapSetting('google_anonymizeIp', $config);
+        $configurationProcessor->mapSetting('bing_verification', $config);
+        $configurationProcessor->mapSetting('limit_to_rootlocation', $config);
+        $configurationProcessor->mapSetting('display_images_in_sitemap', $config);
+        $configurationProcessor->mapSetting('robots', $config);
+        $configurationProcessor->mapConfigArray('fieldtype_metas', $config, ContextualizerInterface::MERGE_FROM_SECOND_LEVEL);
+        $configurationProcessor->mapConfigArray('default_metas', $config);
+        $configurationProcessor->mapConfigArray('default_links', $config);
+        $configurationProcessor->mapConfigArray('sitemap_excludes', $config, ContextualizerInterface::MERGE_FROM_SECOND_LEVEL);
+        $configurationProcessor->mapConfigArray('sitemap_includes', $config, ContextualizerInterface::MERGE_FROM_SECOND_LEVEL);
+        $configurationProcessor->mapConfigArray('robots_disallow', $config);
+        $configurationProcessor->mapConfigArray('robots', $config, ContextualizerInterface::MERGE_FROM_SECOND_LEVEL);
 
         if ($container->hasParameter('novactive.novaseobundle.admin_user_id')) {
             $container->setParameter(
