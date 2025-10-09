@@ -16,16 +16,12 @@ use DOMDocument;
 use Ibexa\Bundle\Core\Controller;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class SEOController extends Controller
 {
-    /**
-     * @Route("/robots.txt", methods={"GET"})
-     *
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     */
+    #[Route(path: '/robots.txt', methods: ['GET'])]
     public function robotsAction(): Response
     {
         $response = new Response();
@@ -75,9 +71,7 @@ class SEOController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/google{key}.html", requirements={ "key": "[a-zA-Z0-9]*" }, methods={"GET"})
-     */
+    #[Route(path: '/google{key}.html', requirements: ['key' => '[a-zA-Z0-9]*'], methods: ['GET'])]
     public function googleVerifAction(string $key): Response
     {
         if ($this->getConfigResolver()->getParameter('google_verification', 'nova_ezseo') !== $key) {
@@ -90,9 +84,7 @@ class SEOController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/BingSiteAuth.xml", methods={"GET"})
-     */
+    #[Route(path: '/BingSiteAuth.xml', methods: ['GET'])]
     public function bingVerifAction(): Response
     {
         if (!$this->getConfigResolver()->hasParameter('bing_verification', 'nova_ezseo')) {

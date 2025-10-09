@@ -32,7 +32,8 @@ use Ibexa\Core\FieldType\RelationList\Type as RelationListType;
 use Ibexa\Core\FieldType\RelationList\Value as RelationListValue;
 use Ibexa\Core\Helper\TranslationHelper;
 use Ibexa\Core\MVC\Exception\SourceImageNotFoundException;
-use Ibexa\Core\Repository\Helper\NameSchemaService;
+use Ibexa\Core\Repository\NameSchema\NameSchemaService;
+use Ibexa\Contracts\Core\Repository\NameSchema\SchemaIdentifierExtractorInterface;
 use Ibexa\Core\Repository\Mapper\ContentTypeDomainMapper;
 use Ibexa\Core\Repository\Values\Content\VersionInfo;
 use Ibexa\FieldTypeRichText\FieldType\RichText\Value as RichTextValue;
@@ -40,6 +41,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class MetaNameSchema extends NameSchemaService
 {
+    protected ContentTypeDomainMapper $contentTypeDomainMapper;
     /**
      * @var RichTextConverterInterface
      */
@@ -76,9 +78,10 @@ class MetaNameSchema extends NameSchemaService
     private $configurationResolver;
 
     public function __construct(
-        ContentTypeHandler $contentTypeHandler,
         FieldTypeRegistry $fieldTypeRegistry,
+        SchemaIdentifierExtractorInterface $schemaIdentifierExtractor,
         EventDispatcherInterface $eventDispatcher,
+        ContentTypeHandler $contentTypeHandler,
         ContentLanguageHandler $languageHandler,
         RepositoryInterface $repository,
         TranslationHelper $translationHelper,
@@ -86,13 +89,13 @@ class MetaNameSchema extends NameSchemaService
         array $settings = []
     ) {
         $settings['limit'] = $this->fieldContentMaxLength;
-        $handler = new ContentTypeDomainMapper(
+        $this->contentTypeDomainMapper = new ContentTypeDomainMapper(
             $contentTypeHandler,
             $languageHandler,
             $fieldTypeRegistry
         );
 
-        parent::__construct($contentTypeHandler, $handler, $fieldTypeRegistry, $eventDispatcher, $settings);
+        parent::__construct($fieldTypeRegistry, $schemaIdentifierExtractor, $eventDispatcher, $settings);
 
         $this->repository = $repository;
         $this->translationHelper = $translationHelper;

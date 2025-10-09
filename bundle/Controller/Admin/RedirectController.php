@@ -30,22 +30,16 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * @Route("/novaseo/redirect")
- *
- * @SuppressWarnings(PHPMD.NPathComplexity)
- */
+#[Route('/novaseo/redirect')]
 class RedirectController extends Controller
 {
     public const URL_LIMIT = 10;
 
-    /**
-     * @Route("/list", name="novaseo_redirect_list")
-     */
+    #[Route(path: '/list', name: 'novaseo_redirect_list')]
     public function listAction(
         Request $request,
         URLWildcardService $urlWildcardService,
@@ -153,11 +147,8 @@ class RedirectController extends Controller
         return new Response();
     }
 
-    /**
-     * @Route("/url-redirect-import", name="novactive_platform_admin_ui.import-redirect-url")
-     *
-     * @Template("@NovaeZSEO/platform_admin/import_urls.html.twig")
-     */
+    #[Route(path: '/url-redirect-import', name: 'novactive_platform_admin_ui.import-redirect-url')]
+    #[Template('@NovaeZSEO/platform_admin/import_urls.html.twig')]
     public function importAction(
         Request $request,
         PermissionResolver $permissionResolver,
@@ -224,11 +215,8 @@ class RedirectController extends Controller
         return $params;
     }
 
-    /**
-     * @Route("/history-import-redirect-url", name="novactive_platform_admin_ui.history-import-redirect-url")
-     *
-     * @Template("@NovaeZSEO/platform_admin/history_urls_imported.html.twig")
-     */
+    #[Route(path: '/history-import-redirect-url', name: 'novactive_platform_admin_ui.history-import-redirect-url')]
+    #[Template('@NovaeZSEO/platform_admin/history_urls_imported.html.twig')]
     public function historyUrlsImported(
         Request $request,
         ImportUrlsHelper $importUrlsHelper,
@@ -252,9 +240,7 @@ class RedirectController extends Controller
         return $params;
     }
 
-    /**
-     * @Route("/download-log-redirect-url/{id}", name="novactive_platform_admin_ui.download-log-redirect-url")
-     */
+    #[Route(path: '/download-log-redirect-url/{id}', name: 'novactive_platform_admin_ui.download-log-redirect-url')]
     public function downloadAction(
         int $id,
         EntityManagerInterface $entityManager,

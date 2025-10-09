@@ -22,7 +22,7 @@ use Ibexa\Core\Helper\FieldHelper;
 use Ibexa\Core\MVC\Symfony\Routing\UrlAliasRouter;
 use Novactive\Bundle\eZSEOBundle\Core\Sitemap\QueryFactory;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class SitemapController extends Controller
@@ -40,9 +40,7 @@ class SitemapController extends Controller
     ) {
     }
 
-    /**
-     * @Route("/sitemap.xml", name="_novaseo_sitemap_index", methods={"GET"})
-     */
+    #[Route(path: '/sitemap.xml', name: '_novaseo_sitemap_index', methods: ['GET'])]
     public function indexAction(QueryFactory $queryFactory): Response
     {
         $searchService = $this->getRepository()->getSearchService();
@@ -78,11 +76,7 @@ class SitemapController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/sitemap-{page}.xml", name="_novaseo_sitemap_page", requirements={"page" = "\d+"},
-     *                                                             defaults={"page" = 1},
-     *                                                             methods={"GET"})
-     */
+    #[Route(path: '/sitemap-{page}.xml', name: '_novaseo_sitemap_page', requirements: ['page' => '\\d+'], defaults: ['page' => 1], methods: ['GET'])]
     public function pageAction(QueryFactory $queryFactory, int $page = 1): Response
     {
         $sitemap = new DOMDocument('1.0', 'UTF-8');
