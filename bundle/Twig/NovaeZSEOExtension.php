@@ -30,7 +30,7 @@ use Twig\Extension\AbstractExtension;
 use Twig\Extension\GlobalsInterface;
 use Twig\TwigFilter;
 
-class NovaeZSEOExtension implements GlobalsInterface
+class NovaeZSEOExtension
 {
     /**
      * CustomFallBack Service.
