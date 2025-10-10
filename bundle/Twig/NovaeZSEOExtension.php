@@ -30,7 +30,7 @@ use Twig\Extension\AbstractExtension;
 use Twig\Extension\GlobalsInterface;
 use Twig\TwigFilter;
 
-class NovaeZSEOExtension
+class NovaeZSEOExtension extends AbstractExtension implements GlobalsInterface
 {
     /**
      * CustomFallBack Service.
@@ -65,13 +65,11 @@ class NovaeZSEOExtension
         $this->customFallBackService = $customFallback;
     }
 
-    #[\Twig\Attribute\AsTwigFilter('getposixlocale_novaseometas')]
     public function getPosixLocale(string $ibexaLocale): ?string
     {
         return $this->localeConverter->convertToPOSIX($ibexaLocale);
     }
 
-    #[\Twig\Attribute\AsTwigFilter('fallback_novaseometas')]
     public function getFallbackedMetaContent(ContentInfo $contentInfo, string $metaName): string
     {
         if ($this->customFallBackService instanceof CustomFallbackInterface) {
@@ -85,7 +83,6 @@ class NovaeZSEOExtension
      * Compute Metas of the Field thanks to its Content and the Fallback.
      */
     // @param $content: use type Content rather than ContentInfo, the last one is @deprecated
-    #[\Twig\Attribute\AsTwigFilter('compute_novaseometas')]
     public function computeMetas(Field $field, $content): string
     {
         $fallback = false;
@@ -171,6 +168,15 @@ class NovaeZSEOExtension
         }
 
         return [];
+    }
+
+    public function getFilters(): array
+    {
+        return [
+            new TwigFilter('getposixlocale_novaseometas', [$this, 'getPosixLocale']),
+            new TwigFilter('fallback_novaseometas', [$this, 'getFallbackedMetaContent']),
+            new TwigFilter('compute_novaseometas', [$this, 'computeMetas']),
+        ];
     }
 
     public function getName(): string
