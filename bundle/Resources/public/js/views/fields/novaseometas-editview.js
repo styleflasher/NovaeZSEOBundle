@@ -5,9 +5,9 @@ YUI.add('novaseometas-editview', function (Y) {
     var L = Y.Lang,
         IS_VISIBLE_CLASS = 'is-visible',
         IS_SHOWING_DESCRIPTION = 'is-showing-description',
-        FIELD_INPUT = '.ez-editfield-input',
-        TOOLTIP_DESCR = '.ez-field-description',
-        STANDARD_DESCR = 'ez-standard-description',
+        FIELD_INPUT = '.ibexa-editfield-input',
+        TOOLTIP_DESCR = '.ibexa-field-description',
+        STANDARD_DESCR = 'ibexa-standard-description',
         FIELDTYPE_IDENTIFIER = 'novaseometas';
 
     Y.Novactive.NovaSEOMetasEditView = Y.Base.create('novaseometasEditView', Y.eZ.FieldEditView, [], {
