@@ -1,12 +1,12 @@
-.ez-metas-list {
+.ibexa-metas-list {
     list-style: none;
 }
 
-.ez-metas-list li {
+.ibexa-metas-list li {
     padding-bottom: 10px;
 }
 
-.ez-metas-list,
+.ibexa-metas-list,
 .novaseometas-input-ui {
     border-left: 3px solid #F4D8B1;
     padding-left: 20px;
@@ -16,13 +16,13 @@
     padding-bottom: 10px;
 }
 
-.novaseometas-input-ui .ez-view-metaeditview:before,
-.novaseometas-input-ui .ez-view-metaeditview:after {
+.novaseometas-input-ui .ibexa-view-metaeditview:before,
+.novaseometas-input-ui .ibexa-view-metaeditview:after {
     content: " ";
     display: table;
 }
 
-.novaseometas-input-ui .ez-view-metaeditview:after {
+.novaseometas-input-ui .ibexa-view-metaeditview:after {
     clear: both;
 }
 
@@ -91,7 +91,7 @@
 
 /* EzPlatform Admin UI */
 
-.ez-adminsection-edit .novaseometas-settings {
+.ibexa-adminsection-edit .novaseometas-settings {
     padding-left: 21px;
     margin-top: 10px;
     margin-left: -23px;
@@ -104,11 +104,11 @@
     padding-left: 10px;
 }
 
-.ez-field-edit--novaseometas {
+.ibexa-field-edit--novaseometas {
     display: flow-root;
 }
 
-.ez-field-edit--novaseometas .ez-data-source__input-wrapper .ez-data-source__label-wrapper {
+.ibexa-field-edit--novaseometas .ibexa-data-source__input-wrapper .ibexa-data-source__label-wrapper {
     display: block;
     border-left: 3px solid #F4D8B1;
     padding-left: 10px;
@@ -116,22 +116,22 @@
     float: left;
 }
 
-.ez-field-edit--novaseometas .ez-data-source__input-wrapper .ez-data-source__input-wrapper {
+.ibexa-field-edit--novaseometas .ibexa-data-source__input-wrapper .ibexa-data-source__input-wrapper {
     display: block;
     width: 70%;
     float: left;
     clear: right;
 }
-.ez-field-edit--novaseometas .ez-data-source__input-wrapper .ez-data-source__input-wrapper .form-check .form-check-label {
+.ibexa-field-edit--novaseometas .ibexa-data-source__input-wrapper .ibexa-data-source__input-wrapper .form-check .form-check-label {
     display: none;
 }
 
-.ez-field-edit--novaseometas .ez-data-source__input-wrapper .ez-data-source__input-wrapper .form-check .form-check-input {
+.ibexa-field-edit--novaseometas .ibexa-data-source__input-wrapper .ibexa-data-source__input-wrapper .form-check .form-check-input {
     margin-top: 0;
     position: relative;
     height: 30px;
 }
 
-.ez-field-edit--novaseometas .ez-data-source__input-wrapper .ez-data-source__input-wrapper .form-check .form-check-input:focus {
+.ibexa-field-edit--novaseometas .ibexa-data-source__input-wrapper .ibexa-data-source__input-wrapper .form-check .form-check-input:focus {
     box-shadow: none;
 }

@@ -1,14 +1,14 @@
-<div class="ez-fieldview-row pure-g">
-    <div class="ez-fieldview-label pure-u">
-        <p class="ez-fieldview-name"><strong>{{ translate_property fieldDefinition.names }}</strong></p>
+<div class="ibexa-fieldview-row pure-g">
+    <div class="ibexa-fieldview-label pure-u">
+        <p class="ibexa-fieldview-name"><strong>{{ translate_property fieldDefinition.names }}</strong></p>
     </div>
-    <div class="ez-fieldview-value pure-u"><div class="ez-fieldview-value-content">
+    <div class="ibexa-fieldview-value pure-u"><div class="ibexa-fieldview-value-content">
         {{#if isEmpty }}
             This field is empty
         {{else}}
-            <ul class="ez-metas-list">
+            <ul class="ibexa-metas-list">
                 {{#each value}}
-                    <li class="ez-metas-list-item">{{{.}}}</li>
+                    <li class="ibexa-metas-list-item">{{{.}}}</li>
                 {{/each}}
             </ul>
         {{/if}}

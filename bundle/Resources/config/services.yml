@@ -77,7 +77,7 @@ services:
         arguments:
             $permissionResolver: '@Ibexa\Contracts\Core\Repository\PermissionResolver'
         tags:
-            - { name: kernel.event_listener, event: "ezplatform_admin_ui.menu_configure.main_menu", method: "onMenuConfigure",  priority: -100 }
+            - { name: kernel.event_listener, event: "ibexa_admin_ui.menu_configure.main_menu", method: "onMenuConfigure",  priority: -100 }
 
     Novactive\Bundle\eZSEOBundle\Core\Helper\ImportUrlsHelper:
         $ioService: '@ezseo_importurls.ibexa.core.io_service'

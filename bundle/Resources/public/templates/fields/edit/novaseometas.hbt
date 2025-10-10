@@ -1,15 +1,15 @@
-<div class="pure-g ez-editfield-row">
-    <div class="pure-u ez-editfield-infos">
-        <label for="ez-field-{{ content.contentId }}-{{ fieldDefinition.identifier }}">
-            <p class="ez-fielddefinition-name">
+<div class="pure-g ibexa-editfield-row">
+    <div class="pure-u ibexa-editfield-infos">
+        <label for="ibexa-field-{{ content.contentId }}-{{ fieldDefinition.identifier }}">
+            <p class="ibexa-fielddefinition-name">
                 {{ translate_property fieldDefinition.names }}{{#if isRequired}}*{{/if}}:
             </p>
-            <p class="ez-editfield-error-message">&nbsp;</p>
+            <p class="ibexa-editfield-error-message">&nbsp;</p>
         </label>
     </div>
-    <div class="pure-u ez-editfield-input-area ez-default-error-style">
+    <div class="pure-u ibexa-editfield-input-area ibexa-default-error-style">
 
-        <div class="ez-editfield-input">
+        <div class="ibexa-editfield-input">
             <div class="novaseometas-input-ui">
 
             </div>
