@@ -135,3 +135,13 @@
 .ibexa-field-edit--novaseometas .ibexa-data-source__input-wrapper .ibexa-data-source__input-wrapper .form-check .form-check-input:focus {
     box-shadow: none;
 }
+.ibexa-field-edit.ibexa-field-edit--novaseometas .ibexa-input-text-wrapper {
+    width: 100%;
+}
+.ibexa-field-edit.ibexa-field-edit--novaseometas .ibexa-data-source__input-wrapper {
+    height: 223px;
+}
+
+.ibexa-field-edit--novaseometas .ibexa-data-source__input-wrapper .ibexa-data-source__input-wrapper {
+    height: auto;
+}
