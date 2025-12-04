@@ -83,7 +83,7 @@ class MetaNameSchema extends NameSchemaService
         );
 
         parent::__construct($fieldTypeRegistry, $schemaIdentifierExtractor, $eventDispatcher, $settings);
-        $this->fieldType = $this->fieldTypeRegistry->getFieldType('ezobjectrelationlist');
+        $this->fieldType = $this->fieldTypeRegistry->getFieldType('ibexa_object_relation_list');
     }
 
     public function setRichTextConverter(RichTextConverterInterface $richTextConverter): void
@@ -100,6 +100,7 @@ class MetaNameSchema extends NameSchemaService
     public function resolveMeta(Meta $meta, Content $content, ?ContentType $contentType = null): bool
     {
         $languages = $this->configResolver->getParameter('languages');
+        //$languages[]='ger-DE';
 
         $resolveMultilingue = $this->resolveNameSchema(
             $meta->getContent(),
