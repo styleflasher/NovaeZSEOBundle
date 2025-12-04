@@ -4,14 +4,14 @@
         <meta name="{{ name }}" content="{{ content }}"/>
     {% endif %}
 {% endfor %}
-
-{% if content is defined and content.fields[nova_ezseo.fieldtype_metas_identifier] is defined %}
+{% if content is defined and content is not null and content.fields[nova_ezseo.fieldtype_metas_identifier] is defined %}
     {{ ibexa_render_field( content, nova_ezseo.fieldtype_metas_identifier ) }}
 {% endif %}
 
-{% if content is defined and content.fields[nova_ezseo.fieldtype_metas_identifier] is not defined %}
+{% if content is defined and content is not null and content.fields[nova_ezseo.fieldtype_metas_identifier] is not defined %}
     {% if content.contentInfo.mainLocationId is defined and content.contentInfo.mainLocationId is not null %}
-        <link rel="canonical" href="{{ url( 'ibexa.url.alias', {'locationId': content.contentInfo.mainLocationId} ) }}" />
+        <link rel="canonical"
+              href="{{ url( 'ibexa.url.alias', {'locationId': content.contentInfo.mainLocationId} ) }}"/>
     {% endif %}
 {% endif %}
 
@@ -29,14 +29,17 @@
                 {% set href = asset( href.asset.path ) %}
             {% endif %}
         {% endif %}
-        <link rel="{{ rel }}"{% if attrs.type is defined %} type="{{ attrs.type }}"{% endif %}{% if attrs.title is defined %} title="{{ attrs.title }}"{% endif %} {% if not href is iterable %}href="{{ href }}"{% endif %}/>
+        <link
+            rel="{{ rel }}"{% if attrs.type is defined %} type="{{ attrs.type }}"{% endif %}{% if attrs.title is defined %} title="{{ attrs.title }}"{% endif %} {% if not href is iterable %}href="{{ href }}"{% endif %}/>
     {% endif %}
 {% endfor %}
 
 {% if ibexa.availableLanguages|length > 1 %}
     {% for lang in ibexa.availableLanguages %}
         {% if location is defined and not location.isDraft %}
-            <link rel="alternate" data-sa="{{ ibexa.translationSiteAccess( lang ) }}" hreflang="{{ lang|getposixlocale_novaseometas }}" href="{{ ibexa_url( location, {"siteaccess": ibexa.translationSiteAccess( lang ) } ) }}" />
+            <link rel="alternate" data-sa="{{ ibexa.translationSiteAccess( lang ) }}"
+                  hreflang="{{ lang|getposixlocale_novaseometas }}"
+                  href="{{ ibexa_url( location, {"siteaccess": ibexa.translationSiteAccess( lang ) } ) }}"/>
         {% else %}
             {# FAILS WITH PAGE BUILDER ON NEW CREATION
             {% set route = ibexa_route( params={"language": lang} ) %}
