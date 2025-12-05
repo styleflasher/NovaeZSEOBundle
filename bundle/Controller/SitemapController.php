@@ -126,7 +126,7 @@ class SitemapController extends Controller
                 continue;
             }
 
-            if (!str_starts_with($url, 'view/content/')) {
+            if (0 != strpos($url, 'view/content/')) {
                 continue;
             }
 
